@@ -25,8 +25,25 @@
 
 | ID | Feature | Description | Status | Spec | Created |
 |----|---------|-------------|--------|------|---------|
+| PROJ-1 | Benutzerkonto & Login | Registrieren, Anmelden, Abmelden und Konto löschen – jeder Nutzer sieht nur seine eigenen Daten. | Roadmap | — | 2026-11-02 |
+| PROJ-2 | App-Rahmen & Navigation | Retro-Programmfenster mit Menü-, Werkzeug- und Statusleiste, Navigation zwischen den Bereichen und Handy-Ansicht. | Roadmap | — | 2026-11-02 |
+| PROJ-3 | Wohnungen | Stammdaten je Wohnung erfassen: Objekt, WEG, Kauf, Eigentumsverhältnis, Steuerdaten und Hausgeld mit Historie. | Roadmap | — | 2026-11-02 |
+| PROJ-4 | Abschreibungsplan | Berechnet je Wohnung den AfA-Plan (linear, degressiv, Sonder-AfA § 7b) mit Jahresbeträgen und Restwert. | Roadmap | — | 2026-11-02 |
+| PROJ-5 | Mieter | Mieter mit Kontaktdaten anlegen und pflegen. | Roadmap | — | 2026-11-02 |
+| PROJ-6 | Mietverträge | Verträge zwischen Wohnung und Mietern mit Laufzeit, Mietbestandteilen, Kaution und Staffel-/Indexmiete. | Roadmap | — | 2026-11-02 |
+| PROJ-7 | Mietanpassungen | Mietänderungen mit Grund und Gültig-ab-Datum dokumentieren, mit vollständiger Historie. | Roadmap | — | 2026-11-02 |
+| PROJ-8 | Darlehen & Tilgungsplan | Darlehen mit Ereignissen und Zinsmethode erfassen, Tilgungsplan und aktuelle Restschuld berechnen, mit Ankerpunkten laut Bank. | Roadmap | — | 2026-11-02 |
+| PROJ-9 | Darlehensverteilung | Darlehen einer oder mehreren Wohnungen zuordnen und Zins, Tilgung und Restschuld nach Fläche, Kaufpreis oder festen Prozenten aufteilen. | Roadmap | — | 2026-11-02 |
+| PROJ-10 | Datenexport & Import | Alle Daten als JSON und CSV exportieren, eine JSON-Sicherung in ein leeres Konto einspielen und „Alle meine Daten löschen“. | Roadmap | — | 2026-11-02 |
+| PROJ-11 | Wachhalter | Automatischer Job, der die Datenbank aktiv hält, damit sie im kostenlosen Tarif nicht pausiert. | Roadmap | — | 2026-11-02 |
+| PROJ-12 | Kontoauszug-Abruf | Bankumsätze automatisch abrufen. | Roadmap | — | 2026-11-02 |
+| PROJ-13 | Buchungszuordnung | Einnahmen und Ausgaben möglichst automatisch den Wohnungen zuordnen. | Roadmap | — | 2026-11-02 |
+| PROJ-14 | Cashflow-Dashboards | Gesamt- und Wohnungsdashboards zu Cashflow und Kostenentwicklung. | Roadmap | — | 2026-11-02 |
+| PROJ-15 | Betriebskostenabrechnung | Jährliche Abrechnung für Mieter auf Basis der WEG-Abrechnung. | Roadmap | — | 2026-11-02 |
+| PROJ-16 | Excel-Import | Daten aus eigenen Excel-Listen übernehmen. | Roadmap | — | 2026-11-02 |
+| PROJ-17 | Abo & Bezahlung | Bezahlmodell für externe Nutzer. | Roadmap | — | 2026-11-02 |
 
-**Build order:** _P0 (MVP): PROJ-1 → PROJ-2 · P1: PROJ-3 (needs PROJ-2) · P2: PROJ-4 (needs PROJ-2) — written by `/init`, kept current by `/refine`_
+**Build order:** P0 (MVP): PROJ-1 → PROJ-2 (needs PROJ-1) → PROJ-3 (needs PROJ-2) → PROJ-4 (needs PROJ-3) → PROJ-5 (needs PROJ-2) → PROJ-6 (needs PROJ-3, PROJ-5) → PROJ-7 (needs PROJ-6) → PROJ-8 (needs PROJ-2) → PROJ-9 (needs PROJ-3, PROJ-8) → PROJ-10 (needs PROJ-3–PROJ-9) → PROJ-11 (needs PROJ-1) · P1: PROJ-12 (needs PROJ-1) → PROJ-13 (needs PROJ-12, PROJ-3) → PROJ-14 (needs PROJ-13, PROJ-9) · P2: PROJ-15 (needs PROJ-6), PROJ-16 (needs PROJ-3–PROJ-9), PROJ-17 (needs PROJ-1)
 
 <!-- Add features above this line -->
 
@@ -36,4 +53,4 @@
 
 - _v1.0.0 · 2026-01-31 · https://app.example.com · PROJ-1, PROJ-2_
 
-## Next Available ID: PROJ-1
+## Next Available ID: PROJ-18

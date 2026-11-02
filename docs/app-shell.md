@@ -1,64 +1,77 @@
-# App Shell & Navigation
+# App-Rahmen & Navigation
 
-> The app-wide map of **the frame every feature is shown inside** — navigation, layout regions, and the patterns each page repeats.
+> Die app-weite Übersicht über **den Rahmen, in dem jedes Feature angezeigt wird** – Navigation, Layout-Bereiche und die Muster, die jede Seite wiederholt.
 >
-> - Created by `/init` (the first holistic pass: top-level areas + layout).
-> - Refined by `/architecture` as each feature is designed.
-> - **Altitude:** structure, not styling. Which areas exist, where they live, who sees them, what every page shares. Colors, fonts, and component styling belong in `docs/design-system.md`; a single page's internals belong in that feature's `design.md`.
->
-> Without this map the shell grows by accretion — every feature adds a nav item and a header variant in its own `design.md`, and nobody owns the whole. Rebuilding it later is then expensive, because no acceptance criterion says what it is supposed to do.
+> - Erstellt von `/init` (erster Gesamtentwurf), 2026-11-02.
+> - Verfeinert von `/architecture`, sobald ein Feature entworfen wird.
+> - **Flughöhe:** Struktur, nicht Gestaltung. Farben, Schrift und Bauteil-Stil stehen in `docs/design-system.md`; das Innere einer einzelnen Seite im `design.md` des jeweiligen Features.
 
-## Owning feature
+## Verantwortliches Feature
 
-_The feature whose `spec.md` carries the shell's acceptance criteria (e.g. `PROJ-1 App Shell & Navigation`), or "none — shell is trivial" for a single-screen app. Changes to the shell are refined there, not invented per feature._
+Owner: **PROJ-2 App-Rahmen & Navigation** – Änderungen am Rahmen laufen über `/refine PROJ-2`.
 
-Owner: _PROJ-X — always a feature: the App Shell feature if one exists, otherwise the feature that builds the screen the frame sits on. Changes to the frame go through `/refine` on this feature._
+## Bereiche
 
-## Top-Level Areas
-
-_The places a user can navigate to. One row per nav entry — not one row per page._
-
-| Area | What the user does there | Visible to | Owning feature |
+| Bereich | Was der Nutzer dort tut | Sichtbar für | Feature |
 |------|--------------------------|------------|----------------|
-| _Dashboard_ | _Overview after login_ | _signed-in users_ | _PROJ-2_ |
-| _..._ | _..._ | _..._ | _..._ |
+| Wohnungen (Startseite) | Liste aller Wohnungen, Details, Hausgeld, Abschreibungsplan | angemeldete Nutzer | PROJ-3, PROJ-4 |
+| Mieter | Mieterliste und Kontaktdaten | angemeldete Nutzer | PROJ-5 |
+| Mietverträge | Verträge, Mietbestandteile, Mietanpassungen | angemeldete Nutzer | PROJ-6, PROJ-7 |
+| Darlehen | Darlehen, Tilgungsplan, Stichtage, Zuordnung zu Wohnungen | angemeldete Nutzer | PROJ-8, PROJ-9 |
+| Extras → Export & Import | Sichern, Wiederherstellen, „Alle meine Daten löschen“ | angemeldete Nutzer | PROJ-10 |
+| Extras → Konto | Passwort, Abmelden, Konto löschen | angemeldete Nutzer | PROJ-1 |
 
-## Layout Regions
+PROJ-11 (Wachhalter) hat keine Oberfläche. Spätere Dashboards (PROJ-14) erhalten eine neue Startseite „Übersicht“.
 
-_The fixed frame. Name each region and what belongs in it._
+## Layout-Bereiche
 
-- **Sidebar:** _the top-level areas, logo at the top, account menu at the bottom_
-- **Header:** _page title, primary action for that page_
-- **Content:** _the feature's own UI_
-- **Mobile:** _how the sidebar behaves below `md` (burger / drawer / bottom bar)_
+Ein Programmfenster auf der Arbeitsfläche (Desktop):
 
-## Page Pattern
+```
+╔═ WohnWerk – Wohnungen ═════════════════════════════════╗  Titelleiste
+║ Datei  Bearbeiten  Ansicht  Extras  ?                  ║  Menüleiste
+║ [Neu] [Bearbeiten] [Löschen] │ [Aktualisieren]          ║  Werkzeugleiste (je Bereich)
+║┌ Bereiche ──────┐┌──────────────────────────────────────┐║
+║│ ▸ Wohnungen    ││  Inhalt des Bereichs                 │║
+║│   Mieter       ││  (Liste oder Detail)                 │║
+║│   Mietverträge ││                                      │║
+║│   Darlehen     ││                                      │║
+║└────────────────┘└──────────────────────────────────────┘║
+║ Bereit                │ 4 Wohnungen │ angemeldet: …     ║  Statusleiste
+╚════════════════════════════════════════════════════════╝
+```
 
-_What every page repeats, so features don't each invent their own. `/build` follows this instead of guessing._
+- **Titelleiste:** „WohnWerk – <Bereich>“.
+- **Menüleiste:** Datei · Bearbeiten · Ansicht · Extras · ?
+- **Werkzeugleiste:** Aktionen des aktuellen Bereichs (Neu, Bearbeiten, Löschen, Aktualisieren …).
+- **Bereiche (links):** Navigation zwischen den Bereichen.
+- **Inhalt (rechts):** die Oberfläche des Features.
+- **Statusleiste:** Status-/Bestätigungstexte, Ladeanzeige, Anzahl, angemeldeter Nutzer.
+- **Handy (unter `md`):** Fenster bildschirmfüllend, keine Arbeitsfläche; Menü-Button links in der Titelleiste öffnet Bereiche und Menüpunkte als Schublade von links; Werkzeugleiste mit großen Symbol-Buttons; Statusleiste einzeilig.
 
-- **Page header:** _title, optional subtitle, primary action on the right_
-- **Loading state:** _skeleton / spinner, and where_
-- **Empty state:** _what an area with no data shows_
-- **Error state:** _how a failed load is presented_
-- **Toasts / feedback:** _where confirmations appear_
+## Seitenmuster
 
-## Auth States
+- **Liste:** Tabelle aller Einträge; Werkzeugleiste mit Neu / Bearbeiten / Löschen; Doppelklick bzw. Tippen öffnet das Detail. Am Handy wird die Tabelle zur Kartenliste.
+- **Detail:** Kopfzeile mit Name (z. B. „WE 03 – Musterstraße 5“) und Aktionen Speichern / Abbrechen; darunter **Registerkarten** (z. B. Wohnung: Allgemein · Kauf & AfA · Hausgeld · Abschreibungsplan · Verträge · Darlehen).
+- **Laden:** Segment-Fortschrittsbalken in der Statusleiste plus „Bitte warten…“.
+- **Leer:** grauer Hinweistext im Inhalt mit Button „Neu…“.
+- **Fehler:** Meldungsfenster im Dialogstil; Feldfehler unter dem Feld.
+- **Bestätigungen:** kurzer Text in der Statusleiste.
+- **Löschen:** immer mit Rückfrage im Dialogfenster.
 
-_The shell usually differs by who is looking. Say how._
+## Anmeldestatus
 
-- **Signed out:** _which areas are reachable, what the shell shows_
-- **Signed in:** _..._
-- **Roles (if any):** _which areas each role sees_
+- **Abgemeldet:** nur ein Anmeldefenster mittig auf der Arbeitsfläche (Anmelden, Registrieren, Passwort vergessen); kein Menü, keine Bereiche.
+- **Angemeldet:** alle Bereiche.
+- **Rollen:** keine im MVP.
 
-## Shell Components
+## Rahmen-Bausteine
 
-_The shared building blocks and where they live, so nothing gets rebuilt per feature._
+_Wird von `/architecture` für PROJ-2 mit Dateipfaden gefüllt._
 
-| Component | File | Purpose |
+| Baustein | Datei | Zweck |
 |-----------|------|---------|
-| _AppSidebar_ | _`src/components/app-sidebar.tsx`_ | _top-level navigation_ |
-| _..._ | _..._ | _..._ |
 
 ---
 
-_This is a living document. When `/architecture` designs a feature that adds a nav entry, a layout region, or a new page pattern, it updates this map first, so later features build against an accurate frame. Behavior changes to the shell go through `/refine` on the owning feature — never straight into a feature's `design.md`._
+_Lebendes Dokument. Wenn `/architecture` ein Feature entwirft, das einen Bereich, eine Layout-Region oder ein neues Seitenmuster hinzufügt, aktualisiert es zuerst diese Übersicht. Verhaltensänderungen am Rahmen laufen über `/refine PROJ-2`._
