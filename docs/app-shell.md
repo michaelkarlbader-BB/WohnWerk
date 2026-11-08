@@ -67,10 +67,15 @@ Ein Programmfenster auf der Arbeitsfläche (Desktop):
 
 ## Rahmen-Bausteine
 
-_Wird von `/architecture` für PROJ-2 mit Dateipfaden gefüllt._
+_Wird von `/architecture` für PROJ-2 vervollständigt._
 
 | Baustein | Datei | Zweck |
 |-----------|------|---------|
+| Fenster | `src/components/retro/window.tsx` | Titelleiste, Inhalt, optionale Statuszeile im Design-System-Stil – angelegt in PROJ-1, von PROJ-2 übernommen und erweitert |
+| Sitzungswächter | `src/features/konto/components/` (Sitzungswächter) | Inaktivität (30 Min.) und Abmeldung in anderen Tabs – auf jeder angemeldeten Seite, angelegt in PROJ-1 |
+| Anfrage-Grenze | `src/proxy.ts` | Umleitung nicht angemeldeter Besucher auf `/anmelden?weiter=…` – PROJ-1 |
+
+**Routengruppen (PROJ-1):** `(abgemeldet)` – Anmelden, Registrieren, Passwort vergessen/neu; `(angemeldet)` – alle Bereiche, bis PROJ-2 mit Platzhalter `/wohnungen` und Seite `/konto`; ohne Anmeldung erreichbar außerdem `/auth/bestaetigen`, `/datenschutz`, `/impressum`.
 
 ---
 
