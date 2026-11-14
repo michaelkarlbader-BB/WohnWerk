@@ -1,8 +1,40 @@
 @import "tailwindcss";
 
 /* Tailwind v4 is CSS-first: there is no tailwind.config.ts. Dark mode, the design
-   tokens, and the animations all live here. */
-@custom-variant dark (&:is(.dark *));
+   tokens, and the animations all live here.
+
+   Design system "Klassisch grau" (docs/design-system.md): radius 0, no drop
+   shadows, depth only through 3D edges, system fonts. shadcn/ui components are
+   themed exclusively from this file - never by editing src/components/ui. */
+
+/* Dark applies when an ancestor carries .dark, or - as long as nothing sets
+   .light on <html> - when the OS prefers dark. Used both by `dark:` utilities and
+   by the token block below, so the dark values are written exactly once. */
+@custom-variant dark {
+  &:where(.dark, .dark *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not(.light), :root:not(.light) *) {
+      @slot;
+    }
+  }
+}
+
+/* Layer for rules that must win over the utility classes baked into the shadcn
+   components (h-10, rounded-md, bg-primary, focus-visible:outline-none ...). */
+@layer theme, base, components, utilities, retro;
+
+/* Edge and focus ring are composed into one box-shadow. Not inherited, so a
+   focused child never picks up the bevel of its container. */
+@property --retro-edge {
+  syntax: "*";
+  inherits: false;
+}
+@property --retro-ring {
+  syntax: "*";
+  inherits: false;
+}
 
 /* Maps the raw values below onto Tailwind utilities: --color-background makes
    bg-background / text-background work, --radius-lg makes rounded-lg work. */
@@ -27,6 +59,23 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
+  /* Project tokens */
+  --color-desktop: hsl(var(--desktop));
+  --color-field: hsl(var(--field));
+  --color-titlebar-from: hsl(var(--titlebar-from));
+  --color-titlebar-to: hsl(var(--titlebar-to));
+  --color-titlebar-inactive-from: hsl(var(--titlebar-inactive-from));
+  --color-titlebar-inactive-to: hsl(var(--titlebar-inactive-to));
+  --color-edge-light: hsl(var(--edge-light));
+  --color-edge-shadow: hsl(var(--edge-shadow));
+  --color-edge-dark: hsl(var(--edge-dark));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-primary-active: hsl(var(--primary-active));
+  --color-primary-subtle: hsl(var(--primary-subtle));
+  --color-positive: hsl(var(--positive));
+  --color-warning: hsl(var(--warning));
+  --color-warning-background: hsl(var(--warning-background));
+
   --color-chart-1: hsl(var(--chart-1));
   --color-chart-2: hsl(var(--chart-2));
   --color-chart-3: hsl(var(--chart-3));
@@ -42,9 +91,35 @@
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
+  /* Radius 0 everywhere: every rounded-* step resolves to the same value. */
+  --radius-xs: var(--radius);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
   --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
+
+  /* No drop shadows: shadow-sm ... shadow-2xl used by shadcn render nothing. */
+  --shadow-2xs: 0 0 #0000;
+  --shadow-xs: 0 0 #0000;
+  --shadow-sm: 0 0 #0000;
+  --shadow-md: 0 0 #0000;
+  --shadow-lg: 0 0 #0000;
+  --shadow-xl: 0 0 #0000;
+  --shadow-2xl: 0 0 #0000;
+
+  /* Typography: system fonts, scale 11 / 13 / 15 / 18 px. */
+  --font-sans: Tahoma, Verdana, "Segoe UI", sans-serif;
+  --text-xs: 0.6875rem;
+  --text-xs--line-height: 1.4;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.4;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.4;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.35;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -60,76 +135,164 @@
   to { height: 0; }
 }
 
+/* 3D edges. Inset 1px lines only - these are edges, not drop shadows. */
+@utility edge-raised {
+  --retro-edge:
+    inset -1px -1px 0 hsl(var(--edge-dark)),
+    inset 1px 1px 0 hsl(var(--edge-light)),
+    inset -2px -2px 0 hsl(var(--edge-shadow));
+  box-shadow: var(--retro-edge), var(--retro-ring, 0 0 0 0 transparent);
+}
+
+@utility edge-sunken {
+  --retro-edge:
+    inset 1px 1px 0 hsl(var(--edge-shadow)),
+    inset -1px -1px 0 hsl(var(--edge-light)),
+    inset 2px 2px 0 hsl(var(--edge-dark));
+  box-shadow: var(--retro-edge), var(--retro-ring, 0 0 0 0 transparent);
+}
+
+@utility edge-pressed {
+  --retro-edge:
+    inset 1px 1px 0 hsl(var(--edge-dark)),
+    inset -1px -1px 0 hsl(var(--edge-light)),
+    inset 2px 2px 0 hsl(var(--edge-shadow));
+  box-shadow: var(--retro-edge), var(--retro-ring, 0 0 0 0 transparent);
+}
+
+@utility titlebar {
+  background-image: linear-gradient(
+    to right,
+    hsl(var(--titlebar-from)),
+    hsl(var(--titlebar-to))
+  );
+  color: hsl(var(--primary-foreground));
+  font-weight: 700;
+}
+
+/* Dotted inner frame plus 2px ring in primary. Applied globally on
+   :focus-visible (see the retro layer); the utility exists for opt-in use,
+   e.g. `focus-within:focus-retro`. */
+@utility focus-retro {
+  --retro-ring: 0 0 0 2px hsl(var(--ring));
+  outline: 1px dotted currentColor;
+  outline-offset: -2px;
+  box-shadow: var(--retro-edge, 0 0 0 0 transparent), var(--retro-ring);
+}
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
+    color-scheme: light;
+
+    --background: 40 12.2% 80.8%; /* Fensterfläche #D4D0C8 */
+    --foreground: 0 0% 11%; /* Text #1C1C1C */
+    --card: 40 12.2% 80.8%;
+    --card-foreground: 0 0% 11%;
+    --popover: 40 12.2% 80.8%;
+    --popover-foreground: 0 0% 11%;
+    --primary: 223.8 82.8% 22.7%; /* Primär #0A246A */
+    --primary-foreground: 60 27.3% 97.8%; /* #FBFBF8 */
+    --secondary: 40 12.2% 80.8%;
+    --secondary-foreground: 0 0% 11%;
+    --muted: 40 12.2% 80.8%;
+    --muted-foreground: 0 0% 31%; /* Text gedämpft #4F4F4F */
+    --accent: 218.2 45.8% 90.6%; /* Primär dezent #DCE4F2 */
+    --accent-foreground: 0 0% 11%;
+    --destructive: 358.3 76.3% 36.5%; /* Negativ #A4161A */
+    --destructive-foreground: 60 27.3% 97.8%;
+    --border: 0 0% 50.2%; /* = 3D-Schatten #808080 */
+    --input: 0 0% 50.2%; /* border colour of fields; the field surface is --field */
+    --ring: 223.8 82.8% 22.7%;
+    --radius: 0px;
+
+    --desktop: 212.3 40.8% 38.4%; /* Arbeitsfläche #3A5F8A */
+    --field: 60 27.3% 97.8%; /* Eingabefeld / Tabelle #FBFBF8 */
+    --titlebar-from: 223.8 82.8% 22.7%; /* #0A246A */
+    --titlebar-to: 210.8 48% 43.7%; /* #3A6EA5 */
+    --titlebar-inactive-from: 0 0% 50.2%; /* #808080 */
+    --titlebar-inactive-to: 0 0% 75.3%; /* #C0C0C0 */
+    --edge-light: 60 23.1% 97.5%; /* #FAFAF7 */
+    --edge-shadow: 0 0% 50.2%; /* #808080 */
+    --edge-dark: 0 0% 25.1%; /* #404040 */
+    --primary-hover: 224.5 72.5% 31.4%; /* #16348A */
+    --primary-active: 223.8 86% 16.9%; /* #061A50 */
+    --primary-subtle: 218.2 45.8% 90.6%; /* #DCE4F2 */
+    --positive: 132.5 56.2% 26.9%; /* #1E6B2E */
+    --warning: 39.1 100% 27.1%; /* #8A5A00 */
+    --warning-background: 47.1 100% 90%; /* #FFF4CC */
+
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 40 12.2% 80.8%;
+    --sidebar-foreground: 0 0% 11%;
+    --sidebar-primary: 223.8 82.8% 22.7%;
+    --sidebar-primary-foreground: 60 27.3% 97.8%;
+    --sidebar-accent: 218.2 45.8% 90.6%;
+    --sidebar-accent-foreground: 0 0% 11%;
+    --sidebar-border: 0 0% 50.2%;
+    --sidebar-ring: 223.8 82.8% 22.7%;
   }
 
+  /* Dark values, written once: active under .dark and under the OS preference
+     (unless <html> carries .light) - see the `dark` variant at the top. */
+  :root,
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    @variant dark {
+      color-scheme: dark;
+
+      --background: 225 8% 19.6%; /* Fensterfläche #2E3036 */
+      --foreground: 42.9 12.3% 88.8%; /* Text #E6E4DF */
+      --card: 225 8% 19.6%;
+      --card-foreground: 42.9 12.3% 88.8%;
+      --popover: 225 8% 19.6%;
+      --popover-foreground: 42.9 12.3% 88.8%;
+      --primary: 218.1 52.5% 38.8%; /* Primär #2F5597 */
+      --primary-foreground: 42.9 12.3% 88.8%;
+      --secondary: 225 8% 19.6%;
+      --secondary-foreground: 42.9 12.3% 88.8%;
+      --muted: 225 8% 19.6%;
+      --muted-foreground: 45 4.4% 64.7%; /* Text gedämpft #A9A7A1 */
+      --accent: 220 32.1% 22%; /* Primär dezent #26324A */
+      --accent-foreground: 42.9 12.3% 88.8%;
+      --destructive: 0 79.7% 71%; /* Negativ #F07A7A */
+      --destructive-foreground: 220 12% 4.9%;
+      --border: 225 3.9% 40%; /* #62646A */
+      --input: 225 3.9% 40%;
+      --ring: 218.1 52.5% 38.8%;
+
+      --desktop: 220 22.4% 13.1%; /* Arbeitsfläche #1A1F29 */
+      --field: 222.9 10.4% 13.1%; /* Eingabefeld / Tabelle #1E2025 */
+      --titlebar-from: 218.1 52.5% 38.8%; /* #2F5597 */
+      --titlebar-to: 214.9 43.7% 50.6%; /* #4A78B8 */
+      --titlebar-inactive-from: 225 5.1% 30.6%; /* #4A4C52 */
+      --titlebar-inactive-to: 225 3.9% 40%; /* #62646A */
+      --edge-light: 223.6 6.7% 32%; /* #4C4F57 */
+      --edge-shadow: 228 9.8% 10%; /* #17181C */
+      --edge-dark: 220 12% 4.9%; /* #0B0C0E */
+      --primary-hover: 217.5 49.1% 44.7%; /* #3A64AA */
+      --primary-active: 217.6 55.8% 32%; /* #24467F */
+      --primary-subtle: 220 32.1% 22%; /* #26324A */
+      --positive: 130.6 40.3% 58.6%; /* #6BC07A */
+      --warning: 42.1 86.3% 62.7%; /* #F2C14E */
+      --warning-background: 41.5 28.9% 17.6%; /* #3A3220 */
+
+      --chart-1: 220 70% 50%;
+      --chart-2: 160 60% 45%;
+      --chart-3: 30 80% 55%;
+      --chart-4: 280 65% 60%;
+      --chart-5: 340 75% 55%;
+      --sidebar-background: 225 8% 19.6%;
+      --sidebar-foreground: 42.9 12.3% 88.8%;
+      --sidebar-primary: 218.1 52.5% 38.8%;
+      --sidebar-primary-foreground: 42.9 12.3% 88.8%;
+      --sidebar-accent: 220 32.1% 22%;
+      --sidebar-accent-foreground: 42.9 12.3% 88.8%;
+      --sidebar-border: 225 3.9% 40%;
+      --sidebar-ring: 218.1 52.5% 38.8%;
+    }
   }
 }
 
@@ -137,7 +300,201 @@
   * {
     @apply border-border;
   }
+
+  /* Font size sits on body, not html: rem stays 16px, so the 4px grid holds. */
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  @media (width >= 48rem) {
+    body {
+      @apply bg-desktop;
+      font-size: 13px;
+    }
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    border-radius: 0;
+  }
+
+  /* Amounts and other numbers: aligned digits, right-aligned. */
+  .zahl {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+}
+
+/* Wins over utilities on purpose (see the layer order at the top). */
+@layer retro {
+  /* Focus: dotted inner frame plus 2px ring in primary, on every interactive
+     element. Replaces the shadcn ring utilities. */
+  :focus-visible {
+    --retro-ring: 0 0 0 2px hsl(var(--ring));
+    outline: 1px dotted currentColor;
+    outline-offset: -2px;
+    box-shadow: var(--retro-edge, 0 0 0 0 transparent), var(--retro-ring);
+  }
+
+  /* Text links have no box to draw into: frame them from the outside. */
+  a:focus-visible,
+  [class~="underline-offset-4"]:focus-visible {
+    outline-offset: 1px;
+  }
+
+  /* Fields: field surface, sunken edge, 44px / 16px on the phone, 21px / 13px
+     from md upwards. */
+  :is(
+      input:not(
+          [type="checkbox"],
+          [type="radio"],
+          [type="range"],
+          [type="file"],
+          [type="color"],
+          [type="image"],
+          [type="hidden"],
+          [type="submit"],
+          [type="button"],
+          [type="reset"]
+        ),
+      select,
+      textarea
+    ) {
+    --retro-edge:
+      inset 1px 1px 0 hsl(var(--edge-shadow)),
+      inset -1px -1px 0 hsl(var(--edge-light)),
+      inset 2px 2px 0 hsl(var(--edge-dark));
+    box-shadow: var(--retro-edge), var(--retro-ring, 0 0 0 0 transparent);
+    border: 0;
+    border-radius: 0;
+    background-color: hsl(var(--field));
+    color: hsl(var(--foreground));
+    min-height: 44px;
+    padding: 2px 8px;
+    font-size: 16px;
+    line-height: 1.25;
+
+    &:focus-visible {
+      outline-offset: -3px;
+    }
+
+    @media (width >= 48rem) {
+      min-height: 21px;
+      padding: 2px 4px;
+      font-size: 13px;
+    }
+  }
+
+  :is(
+      input:not(
+          [type="checkbox"],
+          [type="radio"],
+          [type="range"],
+          [type="file"],
+          [type="color"],
+          [type="image"],
+          [type="hidden"],
+          [type="submit"],
+          [type="button"],
+          [type="reset"]
+        ),
+      select
+    ) {
+    height: 44px;
+
+    @media (width >= 48rem) {
+      height: 21px;
+    }
+  }
+
+  /* Buttons: unstyled <button>, input buttons and the shadcn Button (recognised
+     by its base classes, so `asChild` links are covered; the `link` variant
+     stays text). Grey, raised, 44px on the phone / 23px from md upwards. */
+  :is(
+      button:not([class]),
+      input:is([type="submit"], [type="button"], [type="reset"]),
+      [class~="gap-2"][class~="whitespace-nowrap"][class~="ring-offset-background"]:not(
+          [class~="underline-offset-4"]
+        )
+    ) {
+    --retro-edge:
+      inset -1px -1px 0 hsl(var(--edge-dark)),
+      inset 1px 1px 0 hsl(var(--edge-light)),
+      inset -2px -2px 0 hsl(var(--edge-shadow));
+    box-shadow: var(--retro-edge), var(--retro-ring, 0 0 0 0 transparent);
+    border: 0;
+    border-radius: 0;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    height: 44px;
+    min-width: 44px;
+    padding: 0 16px;
+    font-size: 15px;
+    line-height: 1;
+
+    /* Primary: the classic default button - additional dark frame. */
+    &[class~="bg-primary"] {
+      --retro-edge:
+        inset -1px -1px 0 hsl(var(--edge-dark)),
+        inset 1px 1px 0 hsl(var(--edge-light)),
+        inset -2px -2px 0 hsl(var(--edge-shadow)),
+        0 0 0 1px hsl(var(--edge-dark));
+    }
+
+    /* Destructive: text in the negative colour. */
+    &[class~="bg-destructive"] {
+      color: hsl(var(--destructive));
+    }
+
+    /* Icon size: square. */
+    &[class~="w-10"] {
+      width: 44px;
+      padding: 0;
+    }
+
+    &:hover {
+      background-color: color-mix(
+        in srgb,
+        hsl(var(--background)),
+        hsl(var(--edge-light)) 40%
+      );
+    }
+
+    &:active {
+      --retro-edge:
+        inset 1px 1px 0 hsl(var(--edge-dark)),
+        inset -1px -1px 0 hsl(var(--edge-light)),
+        inset 2px 2px 0 hsl(var(--edge-shadow));
+      background-color: hsl(var(--background));
+    }
+
+    &[class~="bg-primary"]:active {
+      --retro-edge:
+        inset 1px 1px 0 hsl(var(--edge-dark)),
+        inset -1px -1px 0 hsl(var(--edge-light)),
+        inset 2px 2px 0 hsl(var(--edge-shadow)),
+        0 0 0 1px hsl(var(--edge-dark));
+    }
+
+    &:focus-visible {
+      outline-offset: -4px;
+    }
+
+    @media (width >= 48rem) {
+      height: 23px;
+      min-width: 0;
+      padding: 0 12px;
+      font-size: 13px;
+
+      &[class~="w-10"] {
+        width: 23px;
+        padding: 0;
+      }
+    }
   }
 }

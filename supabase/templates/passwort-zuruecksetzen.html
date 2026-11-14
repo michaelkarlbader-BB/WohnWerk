@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Passwort zurücksetzen</title>
+  </head>
+  <body style="margin:0;padding:16px;background:#3A5F8A;font-family:Tahoma,Verdana,'Segoe UI',sans-serif;font-size:14px;color:#1C1C1C;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:#D4D0C8;border:2px solid #404040;">
+      <tr>
+        <td style="background:#0A246A;color:#FAFAF7;font-weight:bold;padding:6px 10px;">WohnWerk – Passwort zurücksetzen</td>
+      </tr>
+      <tr>
+        <td style="padding:16px;">
+          <p style="margin:0 0 12px;">Hallo,</p>
+          <p style="margin:0 0 16px;">für dein WohnWerk-Konto wurde ein neues Passwort angefordert. Über den Button legst du ein neues Passwort fest.</p>
+          <p style="margin:0 0 16px;">
+            <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=recovery" style="display:inline-block;padding:8px 16px;background:#D4D0C8;color:#1C1C1C;border:2px solid #0A246A;text-decoration:none;font-weight:bold;">Neues Passwort festlegen</a>
+          </p>
+          <p style="margin:0 0 12px;color:#4F4F4F;">Der Link ist nur kurze Zeit gültig und kann nur einmal benutzt werden. Funktioniert der Button nicht, kopiere diese Adresse in deinen Browser:<br />
+            <span style="word-break:break-all;">{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=recovery</span>
+          </p>
+          <p style="margin:0;color:#4F4F4F;">Du hast das nicht angefordert? Dann ignoriere diese E-Mail – dein Passwort bleibt unverändert.</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:6px 10px;border-top:1px solid #808080;color:#4F4F4F;font-size:12px;">Diese E-Mail wurde automatisch von WohnWerk versendet.</td>
+      </tr>
+    </table>
+  </body>
+</html>

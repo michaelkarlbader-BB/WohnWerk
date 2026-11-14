@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "WohnWerk",
-  description: "Built with the AI Engineering Kit",
+  description: "Verwaltung vermieteter Eigentumswohnungen",
 };
 
 export default function RootLayout({
@@ -11,11 +11,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Font, colours and the light/dark switch (OS preference) come from globals.css.
   return (
-    <html lang="en">
-      <body className="antialiased">
-        {children}
-      </body>
+    <html lang="de" suppressHydrationWarning>
+      <body>{children}</body>
     </html>
   );
 }
