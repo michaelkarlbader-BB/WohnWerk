@@ -92,6 +92,9 @@
 - [ ] **AC-34** — Angenommen ein aktuelles Handy mit auf „Fast 4G“ gedrosseltem Netz (Browser-Werkzeuge), wenn sich der Nutzer anmeldet, dann ist der Rahmen mit Bereichsliste bzw. Menü-Knopf nach höchstens 2 Sekunden sichtbar und bedienbar (gemessen ab Absenden der Anmeldung bzw. ab Aufruf mit bestehender Sitzung, Inhalte des Bereichs ausgenommen)
 - [ ] **AC-35** — Angenommen der Rahmen ist geladen, wenn der Nutzer einen anderen Bereich wählt, dann zeigen Titelleiste, Auswahl in der Bereichsliste und Ladeanzeige den neuen Bereich nach weniger als 0,5 Sekunden (gemessen in den Browser-Werkzeugen unter denselben Bedingungen wie AC-34)
 
+### Datenschutz
+- [ ] **AC-36** — Angenommen ein angemeldeter Nutzer öffnet einen Bereich, ein Menüziel oder ein Detail, wenn der Browser-Tab-Titel und die Adresse gesetzt sind, dann lautet der Tab-Titel nur „WohnWerk – <Bereich bzw. Menüziel>“ und die Adresse enthält nur Bereichsnamen und Datensatz-IDs – nie Namen, Anschriften oder andere Detailangaben eines Datensatzes; die Titelleiste im Fenster darf den Detailnamen zeigen *(Datenschutzprüfung: Art. 25, Art. 32 DSGVO – Tab-Titel landen im Browserverlauf und in dessen Synchronisierung)*
+
 ## Sonderfälle
 - **EC-1** — Angenommen der Nutzer wählt den bereits aktiven Bereich erneut, wenn er klickt, dann bleibt die Ansicht stehen und es entsteht kein zusätzlicher Eintrag im Browser-Verlauf
 - **EC-2** — Angenommen der Nutzer ruft die Adresse eines noch nicht gebauten Bereichs direkt auf, wenn die Seite lädt, dann sieht er „Diese Seite gibt es nicht.“ (AC-10)
@@ -129,4 +132,5 @@
 | Statusleiste: Statustext (Bestätigung ca. 10 s), Anzahl, angemeldeter Nutzer; am Handy nur Statustext | Ersetzt eingeblendete Benachrichtigungen (Design-System); am Handy fehlt der Platz | 2026-11-08 |
 | Eigene Adressen für Bereiche und Details, Zurück-Knopf funktioniert, „Diese Seite gibt es nicht.“ im Rahmen | Lesezeichen und Browser-Gewohnheiten bleiben nutzbar; Rahmen bleibt auch bei Fehlern bedienbar | 2026-11-08 |
 | Absturzmeldung nur im Inhalt mit „Erneut versuchen“; Offline-Hinweis in der Statusleiste | Ein Fehler in einem Bereich legt nicht die ganze App lahm; PRD: nur online, deshalb nur ein Hinweis statt Offline-Betrieb | 2026-11-08 |
+| Browser-Tab-Titel und Adressen ohne Detailangaben (AC-36); nicht übernommen: „Gerätespeicher erst nach ausdrücklicher Wahl“ und „Protokolle ohne Personendaten“ als eigene ACs | Datenschutzprüfung 2026-11-14: Tab-Titel landen im Browserverlauf und werden u. U. zu Google/Microsoft synchronisiert. Die zwei anderen Vorschläge hat der Product Owner nicht übernommen | 2026-11-14 |
 | Geschwindigkeit: Rahmen ≤ 2 s auf gedrosseltem 4G, Rückmeldung beim Bereichswechsel < 0,5 s | Handy-Nutzung unterwegs ist ein Kernziel; messbar mit den Browser-Werkzeugen | 2026-11-08 |

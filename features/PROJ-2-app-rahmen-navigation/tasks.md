@@ -14,7 +14,7 @@ Pfade ohne Präfix liegen unter `src/components/rahmen/`; Routen in `(angemeldet
 
 ## Ebene 1 — Fundament (Regeln, Darstellung, Fenster)
 
-- [ ] T1 [P]  Verzeichnis der Bereiche/Menüziele (Kennung, Beschriftung, Pfad, Feature, gebaut – Stand laut `design.md`) + reine Funktionen: aktiver Bereich aus Pfad (auch `/<bereich>/<id>`), Titelleistentext, „ist schon die aktuelle Ansicht“, Menüeinträge verfügbar/ausgegraut + Test  · files: src/components/rahmen/navigation.rules.ts, src/components/rahmen/navigation.rules.test.ts  · → AC-5, AC-6, AC-7, AC-9, AC-10, AC-11, EC-1, EC-2
+- [ ] T1 [P]  Verzeichnis der Bereiche/Menüziele (Kennung, Beschriftung, Pfad, Feature, gebaut – Stand laut `design.md`) + reine Funktionen: aktiver Bereich aus Pfad (auch `/<bereich>/<id>`), Titelleistentext, Tab-Titel zu Bereichskennung (nur Beschriftung, nie Detailname – AC-36), „ist schon die aktuelle Ansicht“, Menüeinträge verfügbar/ausgegraut + Test  · files: src/components/rahmen/navigation.rules.ts, src/components/rahmen/navigation.rules.test.ts  · → AC-5, AC-6, AC-7, AC-9, AC-10, AC-11, AC-36, EC-1, EC-2
 - [ ] T2 [P]  Rahmen-Regeln: Statustext-Vorrang (Keine Verbindung > Bitte warten… > Bestätigung > Bereit), Bestätigungsdauer 10 s, Cookie „Maximiert“ (nur exakt `1`) + Test  · files: src/components/rahmen/rahmen.rules.ts, src/components/rahmen/rahmen.rules.test.ts  · → AC-3, AC-21, AC-22, AC-23, AC-33, EC-7, EC-10
 - [ ] T3 [P]  Darstellung app-weit: Darstellungs-Anbieter (`next-themes`, Schlüssel `wohnwerk-darstellung`, Standard „system“), Titelvorlage „WohnWerk – %s“; `globals.css`: Dunkelwerte an Klasse `dark`, globaler Fokus-Stil (gepunkteter Innenrahmen + 2-px-Ring), Fensterhöhe `dvh`, reduzierte Bewegung  · files: src/components/rahmen/darstellung-anbieter.tsx, src/app/layout.tsx, src/app/globals.css  · → AC-2, AC-18, AC-19, AC-20, AC-30, AC-31, EC-6, EC-8
 - [ ] T4 [P]  `window.tsx` erweitern: Knopf-Plätze links/rechts in der Titelleiste, Variante „eingebettet“ ohne eigene Titelleiste + Test  · files: src/components/retro/window.tsx, src/components/retro/window.test.tsx  · → AC-1, AC-3, AC-14, AC-24
@@ -47,7 +47,7 @@ Pfade ohne Präfix liegen unter `src/components/rahmen/`; Routen in `(angemeldet
 
 ## Ebene 6 — Browser-Tests (Playwright)
 
-- [ ] T19 [P]  Navigation: Startseite, Bereichswechsel, Lesezeichen/Direktaufruf, Zurück/Vor, unbekannte Adresse, ungebauter Bereich, abgemeldet, Mehrfachklick  · files: tests/rahmen-navigation.spec.ts  · → AC-1, AC-2, AC-4, AC-5, AC-6, AC-7, AC-8, AC-9, AC-10, EC-1, EC-2, EC-9
+- [ ] T19 [P]  Navigation: Startseite, Bereichswechsel, Lesezeichen/Direktaufruf, Zurück/Vor, unbekannte Adresse, ungebauter Bereich, abgemeldet, Mehrfachklick  · files: tests/rahmen-navigation.spec.ts  · → AC-1, AC-2, AC-4, AC-5, AC-6, AC-7, AC-8, AC-9, AC-10, AC-36, EC-1, EC-2, EC-9
 - [ ] T20 [P]  Menüs, Werkzeugleiste, Statusleiste, Offline-Hinweis  · files: tests/rahmen-menue-status.spec.ts  · → AC-11, AC-12, AC-13, AC-14, AC-15, AC-16, AC-17, AC-21, AC-22, AC-23, AC-33, EC-10
 - [ ] T21 [P]  Ungespeichert (Bereichswechsel, Menüziel, Abmelden, Zurück, Neuladen) und Fehlergrenze – in Chrome, Firefox und Safari  · files: tests/rahmen-ungespeichert.spec.ts  · → AC-27, AC-28, AC-29, AC-32, EC-3
 - [ ] T22 [P]  Darstellung und Maximieren: kein Aufblitzen, Wie System folgt live, privates Fenster ohne Fehler  · files: tests/rahmen-darstellung.spec.ts  · → AC-3, AC-18, AC-19, AC-20, EC-6, EC-7
@@ -56,7 +56,7 @@ Pfade ohne Präfix liegen unter `src/components/rahmen/`; Routen in `(angemeldet
 
 ## Abdeckung
 
-- Alle AC-1 bis AC-35 und EC-1 bis EC-10 sind mindestens einer Aufgabe zugeordnet.
+- Alle AC-1 bis AC-36 und EC-1 bis EC-10 sind mindestens einer Aufgabe zugeordnet (AC-36 ergänzt 2026-11-14: T1, T19; Tab-Titel der Seiten in T15–T17 über die Hilfsfunktion aus T1).
 - AC-34 und AC-35 (Geschwindigkeit) werden durch T17 (Rahmen auf dem Server, keine Bereichsdaten) sowie T5/T15 (angesteuertes Ziel, `loading.tsx`) gebaut; die Messung in den Browser-Werkzeugen erfolgt in `/qa` und steht in `qa-report.md` (laut `design.md`).
 - EC-8 (zwei Tabs): Darstellung über `next-themes` (T3), „ungespeichert“ je Tab im Wächter (T6) – kein eigener Browser-Test.
 - Keine `[user]`-Aufgaben: `design.md` → „Einstellungen, die du selbst machst“ ist leer.

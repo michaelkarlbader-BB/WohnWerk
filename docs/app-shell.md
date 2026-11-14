@@ -21,7 +21,7 @@ Owner: **PROJ-2 App-Rahmen & Navigation** – Änderungen am Rahmen laufen über
 | Extras → Export & Import | `/export-import` | Sichern, Wiederherstellen, „Alle meine Daten löschen“ | angemeldete Nutzer | PROJ-10 |
 | Extras → Konto | `/konto` | Passwort, Abmelden, Konto löschen | angemeldete Nutzer | PROJ-1 |
 
-Details liegen unter `/<bereich>/<id>` (nur Datensatz-ID in der Adresse, nie Namen oder andere personenbezogene Daten). Ob ein Bereich schon gebaut ist (sonst ausgegraut), steht im Verzeichnis `src/components/rahmen/navigation.rules.ts`; jedes Feature schaltet seinen Eintrag beim eigenen `/build` frei. Bis PROJ-3 zeigt `/wohnungen` eine Übergangsseite.
+Details liegen unter `/<bereich>/<id>` (nur Datensatz-ID in der Adresse, nie Namen oder andere personenbezogene Daten). Der Browser-Tab-Titel ist immer nur „WohnWerk – <Bereich>“ aus dem Verzeichnis – Detailnamen (z. B. Mieter, Anschrift) erscheinen nur in der Titelleiste im Fenster (PROJ-2 AC-36). Ob ein Bereich schon gebaut ist (sonst ausgegraut), steht im Verzeichnis `src/components/rahmen/navigation.rules.ts`; jedes Feature schaltet seinen Eintrag beim eigenen `/build` frei. Bis PROJ-3 zeigt `/wohnungen` eine Übergangsseite.
 
 PROJ-11 (Wachhalter) hat keine Oberfläche. Spätere Dashboards (PROJ-14) erhalten eine neue Startseite „Übersicht“.
 
