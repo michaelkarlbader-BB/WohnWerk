@@ -177,11 +177,11 @@ Alles andere ist vorhanden (`@supabase/ssr`, `@supabase/supabase-js`, `zod`, `re
 
 | Einstellung | Wo | Wann | Wert | Warum | → AC |
 | --- | --- | --- | --- | --- | --- |
-| Turnstile-Widget anlegen | Cloudflare Dashboard → Turnstile → Add widget (Hostname `localhost`, später `wohnwerk-mb.de`) | now | Modus „Managed"; Site Key → `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `.env.local` | CAPTCHA | AC-23 |
+| Turnstile-Widget anlegen | Cloudflare Dashboard → Turnstile → Add widget (Hostnamen `localhost` und `test.wohnwerk-mb.de`; für Prod `wohnwerk-mb.de`) | now | Modus „Managed"; Site Key → `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `.env.local` | CAPTCHA | AC-23 |
 | CAPTCHA in Supabase einschalten | Supabase (Dev) → Authentication → Attack Protection → Enable Captcha protection | now | Anbieter Turnstile, Secret Key aus Cloudflare | Supabase prüft das Token selbst | AC-23 |
 | E-Mail-Bestätigung an | Authentication → Sign In / Providers → Email | now | „Confirm email" an, „Secure email change" **aus** (die App benachrichtigt die alte Adresse selbst) | Konto erst nach Bestätigung; Verhalten aus AC-17 | AC-1, AC-17 |
 | Mindestlänge Passwort | Authentication → Sign In / Providers → Email | now | 12 Zeichen | zweite Prüfung neben der App | AC-3 |
-| Site URL und Weiterleitungen | Authentication → URL Configuration | now | Site URL `http://localhost:3000`, Redirect `http://localhost:3000/auth/bestaetigen` | Links in Mails führen zur App | AC-4, AC-11 |
+| Site URL und Weiterleitungen | Authentication → URL Configuration | now | Site URL `http://localhost:3000`, Redirects `http://localhost:3000/auth/bestaetigen` und `https://test.wohnwerk-mb.de/auth/bestaetigen` (Testumgebung, nutzt das Dev-Projekt) | Links in Mails führen zur App | AC-4, AC-11 |
 | Deutsche Mail-Vorlagen | Authentication → Emails → Templates (Confirm signup, Reset password, Change email address) | now | Texte aus `supabase/templates/` einfügen; Links auf `/auth/bestaetigen` | deutsche, als WohnWerk erkennbare Mails | AC-28 |
 | Freigabe-Hook aktivieren | Authentication → Hooks → „Before User Created" → Postgres-Funktion aus der Migration | now | eingeschaltet | Freigabeliste nicht umgehbar | AC-2 |
 | Eigene Adresse freigeben | Table Editor → `registration_allowlist` → Insert row | now | deine E-Mail-Adresse (+ ggf. Testadresse) | sonst kannst du dich nicht registrieren | AC-1 |

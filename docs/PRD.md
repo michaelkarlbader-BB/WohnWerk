@@ -35,6 +35,7 @@ Bewusst **später**: Kontoauszug-Abruf mit (möglichst automatischer) Buchungszu
 - Data region: eu-central-1 (Frankfurt)
 - Hosting: Vercel (vorläufig, wird bei `/deploy` bestätigt)
 - Domain: wohnwerk-mb.de (vorhanden, erfasst 2026-11-14; Produktiv-Adresse und Absender-Domain für Mails)
+- Testumgebung: test.wohnwerk-mb.de (Dev/QA; nutzt das Supabase-Dev-Projekt mit Testdaten, nie Live-Daten; wird bei `/deploy` als Vercel-Umgebung eingerichtet, ohne Suchmaschinen-Indexierung)
 - Data protection law: GDPR (EU/DE)
 - Data protection stance: standard
 - Design system: siehe `docs/design-system.md` (Retro-Stil frühe 2000er, „Klassisch grau“)

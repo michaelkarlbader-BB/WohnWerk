@@ -20,7 +20,7 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 - [ ] T6 [P]  Deutsche Supabase-Mailvorlagen (Bestätigung, Passwort zurücksetzen, E-Mail-Wechsel), Links auf `/auth/bestaetigen`  · files: supabase/templates/bestaetigen.html, supabase/templates/passwort-zuruecksetzen.html, supabase/templates/email-aendern.html  · → AC-1, AC-11, AC-17, AC-28
 - [ ] T7 [P]  Paket `@marsidev/react-turnstile`, CAPTCHA-Feld, Variablennamen mit Dummy-Werten  · files: package.json, package-lock.json, .env.local.example, src/features/konto/components/captcha-feld.tsx  · → AC-23
 - [ ] T8 [user]  Supabase-Dev-Projekt anlegen (falls noch nicht geschehen) und URL + Anon-Key in `.env.local` eintragen  · where: supabase.com → New project, Region eu-central-1 (Frankfurt); Project Settings → API → `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`  · → AC-21
-- [ ] T9 [user]  Turnstile-Widget anlegen  · where: Cloudflare Dashboard → Turnstile → Add widget; Hostname `localhost`, Modus „Managed“; Site Key → `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `.env.local`  · → AC-23
+- [ ] T9 [user]  Turnstile-Widget anlegen  · where: Cloudflare Dashboard → Turnstile → Add widget; Hostnamen `localhost` und `test.wohnwerk-mb.de`, Modus „Managed“; Site Key → `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `.env.local`  · → AC-23
 - [ ] T10 [user]  Brevo-Konto und API-Schlüssel  · where: brevo.com → kostenloses Konto → SMTP & API → API Keys; Absender unter Senders verifizieren; `BREVO_API_KEY`, `MAIL_FROM_ADDRESS` in `.env.local`  · → AC-17, AC-24, AC-27
 - [ ] T11 [user]  AVV abschließen  · where: Supabase → Organization Settings → Legal Documents; Brevo → Konto → DPA; Cloudflare → DPA; jeweils annehmen  · → kein AC (Datenschutz, `docs/privacy.md`)
 
@@ -35,7 +35,7 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 - [ ] T16 [user]  CAPTCHA in Supabase einschalten  · where: Supabase (Dev) → Authentication → Attack Protection → Enable Captcha protection; Anbieter Turnstile, Secret Key aus Cloudflare  · → AC-23
 - [ ] T17 [user]  E-Mail-Bestätigung  · where: Authentication → Sign In / Providers → Email; „Confirm email“ an, „Secure email change“ aus  · → AC-1, AC-17
 - [ ] T18 [user]  Mindestlänge Passwort  · where: Authentication → Sign In / Providers → Email; 12 Zeichen  · → AC-3
-- [ ] T19 [user]  Site URL und Weiterleitungen  · where: Authentication → URL Configuration; Site URL `http://localhost:3000`, Redirect `http://localhost:3000/auth/bestaetigen`  · → AC-4, AC-11
+- [ ] T19 [user]  Site URL und Weiterleitungen  · where: Authentication → URL Configuration; Site URL `http://localhost:3000`, Redirects `http://localhost:3000/auth/bestaetigen` und `https://test.wohnwerk-mb.de/auth/bestaetigen`  · → AC-4, AC-11
 - [ ] T20 [user]  Deutsche Mailvorlagen einfügen (aus T6)  · where: Authentication → Emails → Templates (Confirm signup, Reset password, Change email address); Inhalt aus `supabase/templates/`  · → AC-28
 - [ ] T21 [user]  Freigabe-Hook aktivieren (nach Einspielen von T1)  · where: Authentication → Hooks → „Before User Created“ → Postgres-Funktion aus der Migration; eingeschaltet  · → AC-2
 - [ ] T22 [user]  Eigene Adresse freigeben  · where: Table Editor → `registration_allowlist` → Insert row; deine E-Mail-Adresse (+ ggf. Testadresse)  · → AC-1
@@ -60,7 +60,7 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 
 - [ ] T33  Konto-Fenster mit drei Registerkarten + Seite `/konto`  · files: src/features/konto/components/konto-fenster.tsx, src/app/(angemeldet)/konto/page.tsx  · → AC-15, AC-16, AC-17, AC-18, AC-19, AC-20
 - [ ] T34 [user go-live]  Eigene Domain + SMTP über Brevo  · where: Domain `wohnwerk-mb.de` (vorhanden); Brevo → Domain verifizieren (DNS: SPF, DKIM, DMARC); Supabase (Prod) → Authentication → Emails → SMTP Settings mit Brevo-SMTP; Absender z. B. `noreply@<domain>`  · → AC-28
-- [ ] T35 [user go-live]  Alle Auth-Einstellungen (T16–T22) im Prod-Projekt wiederholen  · where: Supabase (Prod), gleiche Pfade; Site URL = Produktiv-URL, Redirect `https://<production-url>/auth/bestaetigen`; Turnstile-Hostname = Produktiv-Domain  · → alle
+- [ ] T35 [user go-live]  Alle Auth-Einstellungen (T16–T22) im Prod-Projekt wiederholen  · where: Supabase (Prod), gleiche Pfade; Site URL `https://wohnwerk-mb.de`, Redirect `https://wohnwerk-mb.de/auth/bestaetigen`; eigenes Turnstile-Widget bzw. Hostname `wohnwerk-mb.de`  · → alle
 
 ## Abdeckung
 
