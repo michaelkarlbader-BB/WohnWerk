@@ -46,7 +46,7 @@ Für die Datenschutzerklärung: WohnWerk setzt **keine** Analyse-, Werbe- oder T
 
 | Dienst | Was er verarbeitet | Region | AVV abgeschlossen | Außerhalb angemessener Länder? |
 |---------|-------------------|--------|------------------|----------------|
-| Supabase | alle Anwendungsdaten, Auth | eu-central-1 (Frankfurt) | ☐ | US-Unternehmen, Hosting in der EU (EU-US DPF prüfen) |
+| Supabase | alle Anwendungsdaten, Auth | Prod: eu-central-1 (Frankfurt); Dev/Test: eu-west-2 (London, nur Testdaten – UK-Angemessenheitsbeschluss) | ☐ | US-Unternehmen, Hosting in der EU (EU-US DPF prüfen) |
 | Vercel | Anfragen, Server-Logs (IP, Adressen, Fehlermeldungen) | Funktionsregion **nicht ermittelt** (Vorschlag: fra1) | ☐ | US-Unternehmen (EU-US DPF prüfen) |
 | Cloudflare Turnstile (CAPTCHA) | IP, Browser-/Gerätesignale | global – **nicht ermittelt** | ☐ | US-Unternehmen (EU-US DPF prüfen) |
 | Brevo (E-Mail-Versand) | E-Mail-Adresse, Mailinhalt, Versandprotokolle (Aufbewahrung **nicht ermittelt**) | EU (Sitz Frankreich) – Rechenzentrum **nicht ermittelt** | ☐ | nein (EU-Unternehmen) |

@@ -10,8 +10,8 @@
 
 ## Stufe 1 – vor `/build` <!-- gate:build -->
 
-- [ ] **PFLICHT** · technisch — Supabase-Dev-Projekt in der Region **eu-central-1 (Frankfurt)** anlegen. Die Region lässt sich später nicht mehr ändern (Datenstandort, DSGVO).
-- [ ] **PFLICHT** · technisch — Test-Schlüssel des Dev-Projekts (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) selbst in `.env.local` eintragen – nie Live-Schlüssel.
+- [x] **PFLICHT** · technisch — Supabase-Dev-Projekt anlegen. → erledigt 2026-11-14: Region **eu-west-2 (London)** statt Frankfurt, bewusst so entschieden – UK hat einen EU-Angemessenheitsbeschluss, im Dev-Projekt liegen nur Testdaten. Prod bleibt Frankfurt (Stufe 3).
+- [x] **PFLICHT** · technisch — Test-Schlüssel des Dev-Projekts (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) selbst in `.env.local` eintragen – nie Live-Schlüssel. → erledigt 2026-11-14 (URL und Publishable Key, Format geprüft)
 - [ ] Empfohlen — AVV mit Supabase gleich mit annehmen (Organization Settings → Legal Documents); spätestens in Stufe 2 Pflicht.
 
 ## Stufe 2 – vor der Testumgebung test.wohnwerk-mb.de (erstes `/deploy`) <!-- gate:test -->
