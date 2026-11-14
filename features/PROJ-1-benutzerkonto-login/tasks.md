@@ -28,10 +28,10 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 
 <!-- Zu Beginn dieser Ebene spielt /build die Migrationen aus T1/T2 ins Dev-Projekt ein (supabase link + db push). -->
 
-- [ ] T12 [P]  Serverseitiger Datenzugriff: Profil lesen/ändern, Fehlversuche prüfen/zählen/löschen, eigenes Konto löschen + Test  · files: src/features/konto/konto.data.ts, src/features/konto/konto.data.test.ts  · → AC-15, AC-18, AC-19, AC-21, AC-22, AC-29
-- [ ] T13 [P]  App-eigene Mails über Brevo (Hinweis an alte Adresse, „bereits registriert“, Sicherheitshinweis), deutsche Texte + Test  · files: src/features/konto/mail.integration.ts, src/features/konto/mail.integration.test.ts  · → AC-17, AC-24, AC-27, AC-28
-- [ ] T14 [P]  Proxy: Sitzung am Auth-Server prüfen, Inaktivität (30 Min.) über Aktivitäts-Cookie, Umleitung auf `/anmelden?weiter=…`; Sitzungs-Cookies ohne Ablaufdatum in allen Supabase-Clients + Test  · files: src/proxy.ts, src/proxy.test.ts, src/lib/supabase/proxy.ts, src/lib/supabase/server.ts, src/lib/supabase/client.ts  · → AC-7, AC-8, AC-10, EC-3, EC-4
-- [ ] T15 [P]  Route für Links aus Mails (Bestätigung, Passwort, E-Mail-Wechsel); ungültig/abgelaufen → Weiterleitung auf `/link-ungueltig` + Test  · files: src/app/auth/bestaetigen/route.ts, src/app/auth/bestaetigen/route.test.ts  · → AC-4, AC-11, AC-17, EC-2
+- [x] T12 [P]  Serverseitiger Datenzugriff: Profil lesen/ändern, Fehlversuche prüfen/zählen/löschen, eigenes Konto löschen + Test  · files: src/features/konto/konto.data.ts, src/features/konto/konto.data.test.ts  · → AC-15, AC-18, AC-19, AC-21, AC-22, AC-29
+- [x] T13 [P]  App-eigene Mails über Brevo (Hinweis an alte Adresse, „bereits registriert“, Sicherheitshinweis), deutsche Texte + Test  · files: src/features/konto/mail.integration.ts, src/features/konto/mail.integration.test.ts  · → AC-17, AC-24, AC-27, AC-28
+- [x] T14 [P]  Proxy: Sitzung am Auth-Server prüfen, Inaktivität (30 Min.) über Aktivitäts-Cookie, Umleitung auf `/anmelden?weiter=…`; Sitzungs-Cookies ohne Ablaufdatum in allen Supabase-Clients + Test  · files: src/proxy.ts, src/proxy.test.ts, src/lib/supabase/proxy.ts, src/lib/supabase/server.ts, src/lib/supabase/client.ts  · → AC-7, AC-8, AC-10, EC-3, EC-4
+- [x] T15 [P]  Route für Links aus Mails (Bestätigung, Passwort, E-Mail-Wechsel); ungültig/abgelaufen → Weiterleitung auf `/link-ungueltig` + Test  · files: src/app/auth/bestaetigen/route.ts, src/app/auth/bestaetigen/route.test.ts  · → AC-4, AC-11, AC-17, EC-2
 - [ ] T16 [user]  CAPTCHA in Supabase einschalten  · where: Supabase (Dev) → Authentication → Attack Protection → Enable Captcha protection; Anbieter Turnstile, Secret Key aus Cloudflare  · → AC-23
 - [ ] T17 [user]  E-Mail-Bestätigung  · where: Authentication → Sign In / Providers → Email; „Confirm email“ an, „Secure email change“ aus  · → AC-1, AC-17
 - [ ] T18 [user]  Mindestlänge Passwort  · where: Authentication → Sign In / Providers → Email; 12 Zeichen  · → AC-3

@@ -46,6 +46,11 @@ export function sperrMeldung(gesperrtBis: Date, jetzt: Date): string {
 export const AKTIVITAET_COOKIE = 'ww-aktiv'
 export const INAKTIVITAET_MAX_MS = 30 * 60 * 1000
 export const AKTIVITAET_MELDE_INTERVALL_MS = 5 * 60 * 1000
+/**
+ * Options of the activity cookie: no maxAge/expires, so it disappears when the browser closes.
+ * The caller adds `secure` outside of local development.
+ */
+export const AKTIVITAET_COOKIE_OPTIONEN = { httpOnly: true, sameSite: 'lax', path: '/' } as const
 
 const ZUKUNFT_TOLERANZ_MS = 60_000
 

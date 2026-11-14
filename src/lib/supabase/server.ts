@@ -4,6 +4,7 @@
 import 'server-only'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { sitzungsCookieOptionen } from './proxy'
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -17,7 +18,10 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+            // Session cookies: gone when the browser closes (see sitzungsCookieOptionen).
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, sitzungsCookieOptionen(options, value)),
+            )
           } catch {
             // Called from a Server Component, which cannot set cookies. Harmless as long as
             // src/proxy.ts refreshes the session — see docs/stacks/backend-supabase.md.
