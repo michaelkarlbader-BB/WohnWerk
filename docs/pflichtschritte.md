@@ -32,7 +32,8 @@ Ab hier ist WohnWerk öffentlich erreichbar: Jeder Aufruf verarbeitet IP-Adresse
 
 Ab hier liegen echte Daten in WohnWerk, auch Daten deiner Mieter.
 
-- [ ] **PFLICHT** · technisch/Datenschutz — Supabase-**Prod**-Projekt in **eu-central-1 (Frankfurt)** anlegen; Schlüssel nur im Vercel-Dashboard (Production) eintragen.
+- [ ] **PFLICHT** · technisch/Datenschutz — Supabase-**Prod**-Projekt „WohnWerk Prod“ in **eu-central-1 (Frankfurt)** anlegen (beim Anlegen über „need a specific region“ wählen – die Auswahl „Europe“ legt die Region nicht fest); Sicherheitseinstellungen wie beim Dev-Projekt.
+- [ ] **PFLICHT** · technisch — Prod-Schlüssel (URL, Publishable Key) nur im Hosting-Dashboard (Production) eintragen, nie in `.env.local`; erst nach der Hosting-Entscheidung (Stufe 2).
 - [ ] **PFLICHT** · technisch — Alle Auth-Einstellungen im Prod-Projekt wiederholen: Site URL `https://wohnwerk-mb.de`, Redirect, CAPTCHA, Freigabe-Hook, Mailvorlagen, Mindestlänge (PROJ-1 T35).
 - [ ] **PFLICHT** · technisch — Domain `wohnwerk-mb.de` bei Brevo verifizieren (SPF, DKIM, DMARC) und Brevo-SMTP im Supabase-Prod-Projekt eintragen (PROJ-1 T34). Ohne sie kommen Bestätigungs- und Passwort-Mails nicht zuverlässig an.
 - [ ] **PFLICHT** · rechtlich (DDG) — **Impressum**-Inhalt liefern. (Ob es als Privatperson zwingend ist, ist eine offene Anwaltsfrage – bis zur Klärung gilt die vorsichtige Annahme.)
