@@ -12,13 +12,13 @@
 
 - [x] **PFLICHT** · technisch — Supabase-Dev-Projekt anlegen. → erledigt 2026-11-14: Region **eu-west-2 (London)** statt Frankfurt, bewusst so entschieden – UK hat einen EU-Angemessenheitsbeschluss, im Dev-Projekt liegen nur Testdaten. Prod bleibt Frankfurt (Stufe 3).
 - [x] **PFLICHT** · technisch — Test-Schlüssel des Dev-Projekts (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) selbst in `.env.local` eintragen – nie Live-Schlüssel. → erledigt 2026-11-14 (URL und Publishable Key, Format geprüft)
-- [ ] Empfohlen — AVV mit Supabase: gilt automatisch über die Nutzungsbedingungen (Abschn. 7(b)); aktuelle Fassung von https://supabase.com/legal/dpa als PDF ablegen; spätestens in Stufe 2 Pflicht.
+- [x] Empfohlen — AVV mit Supabase: gilt automatisch über die Nutzungsbedingungen (Abschn. 7(b)); aktuelle Fassung von https://supabase.com/legal/dpa als PDF ablegen; spätestens in Stufe 2 Pflicht. → erledigt 2026-11-14: Version 1 vom 01.08.2026 als `docs/legal/supabase-dpa-v1_abgerufen-2026-11-14.pdf` abgelegt.
 
 ## Stufe 2 – vor der Testumgebung test.wohnwerk-mb.de (erstes `/deploy`) <!-- gate:test -->
 
 Ab hier ist WohnWerk öffentlich erreichbar: Jeder Aufruf verarbeitet IP-Adressen, und das CAPTCHA lädt.
 
-- [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Supabase**: gilt über die Nutzungsbedingungen; erledigt, sobald die aktuelle DPA-Fassung als PDF abgelegt ist.
+- [x] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Supabase**: gilt über die Nutzungsbedingungen; erledigt, sobald die aktuelle DPA-Fassung als PDF abgelegt ist. → erledigt 2026-11-14: Version 1 vom 01.08.2026 als `docs/legal/supabase-dpa-v1_abgerufen-2026-11-14.pdf` abgelegt.
 - [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — **Hosting mit AVV:** Vercel Hobby ist nicht abgedeckt (DPA gilt nur für Pro/Enterprise, Hobby nur nicht-kommerziell). Entscheidung nötig: Vercel Pro, anderer Anbieter mit AVV im kostenlosen Tarif, oder schriftliche Klärung mit Vercel. Danach AVV-Fassung als PDF ablegen.
 - [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Cloudflare**: gilt über die Self-Serve-Bedingungen (§6.1); erledigt, sobald die aktuelle DPA-Fassung als PDF abgelegt ist.
 - [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Brevo**: im Brevo-Konto bzw. auf brevo.com/legal prüfen, ob er Teil der Nutzungsbedingungen ist oder aktiv abgeschlossen werden muss; Fassung als PDF ablegen.
