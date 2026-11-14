@@ -12,16 +12,20 @@ Owner: **PROJ-2 App-Rahmen & Navigation** – Änderungen am Rahmen laufen über
 
 ## Bereiche
 
-| Bereich | Was der Nutzer dort tut | Sichtbar für | Feature |
-|------|--------------------------|------------|----------------|
-| Wohnungen (Startseite) | Liste aller Wohnungen, Details, Hausgeld, Abschreibungsplan | angemeldete Nutzer | PROJ-3, PROJ-4 |
-| Mieter | Mieterliste und Kontaktdaten | angemeldete Nutzer | PROJ-5 |
-| Mietverträge | Verträge, Mietbestandteile, Mietanpassungen | angemeldete Nutzer | PROJ-6, PROJ-7 |
-| Darlehen | Darlehen, Tilgungsplan, Stichtage, Zuordnung zu Wohnungen | angemeldete Nutzer | PROJ-8, PROJ-9 |
-| Extras → Export & Import | Sichern, Wiederherstellen, „Alle meine Daten löschen“ | angemeldete Nutzer | PROJ-10 |
-| Extras → Konto | Passwort, Abmelden, Konto löschen | angemeldete Nutzer | PROJ-1 |
+| Bereich | Adresse | Was der Nutzer dort tut | Sichtbar für | Feature |
+|------|------|--------------------------|------------|----------------|
+| Wohnungen (Startseite) | `/wohnungen` | Liste aller Wohnungen, Details, Hausgeld, Abschreibungsplan | angemeldete Nutzer | PROJ-3, PROJ-4 |
+| Mieter | `/mieter` | Mieterliste und Kontaktdaten | angemeldete Nutzer | PROJ-5 |
+| Mietverträge | `/mietvertraege` | Verträge, Mietbestandteile, Mietanpassungen | angemeldete Nutzer | PROJ-6, PROJ-7 |
+| Darlehen | `/darlehen` | Darlehen, Tilgungsplan, Stichtage, Zuordnung zu Wohnungen | angemeldete Nutzer | PROJ-8, PROJ-9 |
+| Extras → Export & Import | `/export-import` | Sichern, Wiederherstellen, „Alle meine Daten löschen“ | angemeldete Nutzer | PROJ-10 |
+| Extras → Konto | `/konto` | Passwort, Abmelden, Konto löschen | angemeldete Nutzer | PROJ-1 |
+
+Details liegen unter `/<bereich>/<id>` (nur Datensatz-ID in der Adresse, nie Namen oder andere personenbezogene Daten). Ob ein Bereich schon gebaut ist (sonst ausgegraut), steht im Verzeichnis `src/components/rahmen/navigation.rules.ts`; jedes Feature schaltet seinen Eintrag beim eigenen `/build` frei. Bis PROJ-3 zeigt `/wohnungen` eine Übergangsseite.
 
 PROJ-11 (Wachhalter) hat keine Oberfläche. Spätere Dashboards (PROJ-14) erhalten eine neue Startseite „Übersicht“.
+
+**Menüleiste (PROJ-2):** Datei – Neu…, Abmelden · Bearbeiten – Bearbeiten…, Löschen… · Ansicht – die vier Bereiche, Aktualisieren, Darstellung ▸ Hell / Dunkel / Wie System · Extras – Export & Import…, Konto… · ? – Über WohnWerk, Datenschutz, Impressum. Am Handy dieselben Einträge in der Schublade.
 
 ## Layout-Bereiche
 
@@ -53,11 +57,15 @@ Ein Programmfenster auf der Arbeitsfläche (Desktop):
 
 - **Liste:** Tabelle aller Einträge; Werkzeugleiste mit Neu / Bearbeiten / Löschen; Doppelklick bzw. Tippen öffnet das Detail. Am Handy wird die Tabelle zur Kartenliste.
 - **Detail:** Kopfzeile mit Name (z. B. „WE 03 – Musterstraße 5“) und Aktionen Speichern / Abbrechen; darunter **Registerkarten** (z. B. Wohnung: Allgemein · Kauf & AfA · Hausgeld · Abschreibungsplan · Verträge · Darlehen).
-- **Laden:** Segment-Fortschrittsbalken in der Statusleiste plus „Bitte warten…“.
+- **Laden:** Segment-Fortschrittsbalken in der Statusleiste plus „Bitte warten…“ – das Feature meldet Laden über die Rahmen-Schnittstelle, auch das Ende bei Fehlern.
 - **Leer:** grauer Hinweistext im Inhalt mit Button „Neu…“.
-- **Fehler:** Meldungsfenster im Dialogstil; Feldfehler unter dem Feld.
-- **Bestätigungen:** kurzer Text in der Statusleiste.
+- **Fehler:** Meldungsfenster im Dialogstil; Feldfehler unter dem Feld. Unerwartete Fehler fängt der Rahmen ab: Inhalt zeigt „Hier ist etwas schiefgelaufen.“ mit „Erneut versuchen“ / „Zu den Wohnungen“, Leisten bleiben bedienbar.
+- **Nicht gefunden:** unbekannte Adresse oder fehlender/fremder Datensatz → „Diese Seite gibt es nicht.“ mit „Zu den Wohnungen“ im Inhalt (Features lösen dafür die Nicht-gefunden-Anzeige aus).
+- **Bestätigungen:** kurzer Text in der Statusleiste, nach 10 s wieder „Bereit“.
+- **Ungespeicherte Änderungen:** das Feature meldet „ungespeichert“; der Rahmen fragt bei Navigation, Zurück, Menüzielen und Abmelden nach („Verwerfen“ / „Abbrechen“). Links im Inhalt nutzen den geschützten Link des Rahmens.
+- **Keine Verbindung:** Hinweis in der Statusleiste, kein Offline-Betrieb.
 - **Löschen:** immer mit Rückfrage im Dialogfenster.
+- **Darstellung:** Hell / Dunkel / Wie System je Gerät (gilt auch für das Anmeldefenster); Fenster maximiert je Gerät.
 
 ## Anmeldestatus
 
@@ -67,15 +75,20 @@ Ein Programmfenster auf der Arbeitsfläche (Desktop):
 
 ## Rahmen-Bausteine
 
-_Wird von `/architecture` für PROJ-2 vervollständigt._
+Der Rahmen ist geteilter Code unter `src/components/rahmen/` (gehört PROJ-2; liegt nicht unter `src/features/`, damit alle Bereichs-Features ihn importieren dürfen und er selbst nie ein Feature importiert). Details: `features/PROJ-2-app-rahmen-navigation/design.md`.
 
 | Baustein | Datei | Zweck |
 |-----------|------|---------|
-| Fenster | `src/components/retro/window.tsx` | Titelleiste, Inhalt, optionale Statuszeile im Design-System-Stil – angelegt in PROJ-1, von PROJ-2 übernommen und erweitert |
-| Sitzungswächter | `src/features/konto/components/` (Sitzungswächter) | Inaktivität (30 Min.) und Abmeldung in anderen Tabs – auf jeder angemeldeten Seite, angelegt in PROJ-1 |
+| Programmfenster + Leisten | `src/components/rahmen/` (programmfenster, menueleiste, werkzeugleiste, bereichsliste, statusleiste, schublade, ueber-dialog) | Der Rahmen um alle angemeldeten Seiten; eingehängt einmal im Layout `src/app/(angemeldet)/layout.tsx` – **nie** in einem Feature nachbauen |
+| Rahmen-Schnittstelle | `src/components/rahmen/rahmen-kontext.tsx` | Was Features melden: **Bereich einrichten** (Aktionen neu/bearbeiten/löschen/aktualisieren je mit Funktion + verfügbar; optional Anzahl-Text, Detailtitel, ungespeichert), **Bestätigung** (Text), **Laden** (an/aus), **geschützter Link / geschützte Navigation**, **ohne Rückfrage verlassen** (nur Sitzungswächter) |
+| Verzeichnis der Bereiche | `src/components/rahmen/navigation.rules.ts` | Bereiche und Menüziele mit Adresse und „gebaut“ – jedes Feature schaltet seinen Eintrag frei |
+| Inhaltsmeldungen | `src/components/rahmen/inhalt-meldungen.tsx` | „Diese Seite gibt es nicht.“, „Hier ist etwas schiefgelaufen.“, Lade-Platzhalter |
+| Darstellung | `src/components/rahmen/darstellung-anbieter.tsx` | Hell / Dunkel / Wie System (next-themes) für die ganze App |
+| Fenster | `src/components/retro/window.tsx` | Titelleiste, Inhalt, optionale Statuszeile im Design-System-Stil – angelegt in PROJ-1, von PROJ-2 erweitert (Titelleisten-Knöpfe, Variante „eingebettet“ ohne eigene Titelleiste für Inhalte im Rahmen) |
+| Sitzungswächter | `src/features/konto/components/` (Sitzungswächter) | Inaktivität (30 Min.) und Abmeldung in anderen Tabs – auf jeder angemeldeten Seite, angelegt in PROJ-1; ruft vor automatischer Abmeldung „ohne Rückfrage verlassen“ |
 | Anfrage-Grenze | `src/proxy.ts` | Umleitung nicht angemeldeter Besucher auf `/anmelden?weiter=…` – PROJ-1 |
 
-**Routengruppen (PROJ-1):** `(abgemeldet)` – Anmelden, Registrieren, Passwort vergessen/neu; `(angemeldet)` – alle Bereiche, bis PROJ-2 mit Platzhalter `/wohnungen` und Seite `/konto`; ohne Anmeldung erreichbar außerdem `/auth/bestaetigen`, `/datenschutz`, `/impressum`.
+**Routengruppen:** `(abgemeldet)` – Anmelden, Registrieren, Passwort vergessen/neu (PROJ-1); `(angemeldet)` – Layout mit Rahmen, `loading.tsx`, `error.tsx`, `not-found.tsx`, Auffang-Route `[...pfad]` (PROJ-2), darunter je Bereich eine Route; ohne Anmeldung erreichbar außerdem `/auth/bestaetigen`, `/datenschutz`, `/impressum`.
 
 ---
 

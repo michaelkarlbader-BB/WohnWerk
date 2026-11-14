@@ -112,8 +112,8 @@
 - Schnittstelle zu den Bereichs-Features (Inhalt, Aktionen, Anzahl, Bestätigungen, Ladezustand, ungespeicherte Änderungen) legt `/architecture` fest und trägt sie in `docs/app-shell.md` → Rahmen-Bausteine ein.
 
 ## Offene Fragen
-- [ ] Woher kommt die Versionsnummer für „Über WohnWerk“ (z. B. Paketversion oder Release-Tag)? → `/architecture`
-- [ ] Wie meldet ein Feature seinen Bereich als „gebaut“ bzw. noch nicht gebaut (AC-7)? → `/architecture`
+- [x] Woher kommt die Versionsnummer für „Über WohnWerk“ (z. B. Paketversion oder Release-Tag)? → `package.json`-Version, gepflegt von `/deploy` (siehe `design.md`)
+- [x] Wie meldet ein Feature seinen Bereich als „gebaut“ bzw. noch nicht gebaut (AC-7)? → festes Verzeichnis im Rahmen, jedes Feature schaltet seinen Eintrag beim `/build` frei (siehe `design.md`)
 
 ## Decision Log
 
