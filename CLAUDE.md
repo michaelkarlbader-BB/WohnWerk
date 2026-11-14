@@ -59,6 +59,7 @@ docs/
 - **Code structure and checks:** Follow the Next.js pack's feature/module convention. `npm run check`
   is the final build check; targeted tests remain the inner loop. See `docs/stacks/framework-nextjs.md`.
 
+- **Pflichtschritte:** `docs/pflichtschritte.md` listet die Schritte des Nutzers außerhalb des Codes (AVV, Datenschutzerklärung, Impressum, Supabase-/Vercel-Einstellungen) nach Stufen. Vor `/build`, `/deploy`, dem Merge nach `main` und vor dem ersten fremden Nutzer die fällige Stufe prüfen (`node scripts/pflichtschritte.mjs status`), offene **PFLICHT**-Punkte nennen und nicht weitermachen, bis sie erledigt sind; Empfohlenes erinnern. Abhaken nur nach Bestätigung durch den Nutzer. Hooks in `.claude/settings.json` erzwingen das zusätzlich.
 - **Working language: Deutsch.** Talk to the user in Deutsch and write every project document in Deutsch — see `.claude/rules/general.md` → Working Language.
 - **Feature IDs:** PROJ-1, PROJ-2, etc. (sequential)
 - **Commits:** `feat(PROJ-X): description`, `fix(PROJ-X): description`
