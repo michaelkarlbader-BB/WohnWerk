@@ -77,13 +77,14 @@
 - [ ] **AC-26** — Angenommen eine Registrierung wurde nicht innerhalb von 7 Tagen bestätigt, wenn die Frist abläuft, dann werden die Registrierungsdaten automatisch gelöscht *(Datenschutzprüfung: Speicherbegrenzung, Art. 5 Abs. 1 lit. e DSGVO)*
 - [ ] **AC-27** — Angenommen ein Nutzer ändert sein Passwort oder schaltet 2FA aus, wenn die Änderung gespeichert ist, dann erhält er eine Benachrichtigung per E-Mail *(Datenschutzprüfung: Sicherheit, Art. 32 DSGVO)*
 - [ ] **AC-28** — Angenommen WohnWerk versendet eine E-Mail zum Konto, wenn sie ankommt, dann ist sie auf Deutsch und als WohnWerk erkennbar
+- [ ] **AC-29** — Angenommen ein Nutzer löscht sein Konto erfolgreich (AC-19), wenn die Löschung ausgeführt ist, dann ist auch der Eintrag seiner aktuellen E-Mail-Adresse auf der Freigabeliste entfernt; eine erneute Registrierung mit dieser Adresse wird wie bei einer nie freigegebenen Adresse abgelehnt (AC-2) *(Datenschutzprüfung: Speicherbegrenzung und Löschung, Art. 5 Abs. 1 lit. e, Art. 17 DSGVO)*
 
 ## Sonderfälle
 - **EC-1** — Angenommen ein Konto ist noch nicht bestätigt, wenn der Nutzer sich anmelden will, dann sieht er „Bitte bestätige zuerst deine E-Mail-Adresse“ und einen Button „Bestätigungs-E-Mail erneut senden“
 - **EC-2** — Angenommen ein Link (Bestätigung, Passwort zurücksetzen, E-Mail-Wechsel) ist abgelaufen oder schon benutzt, wenn der Nutzer ihn öffnet, dann sieht er eine verständliche Meldung und kann einen neuen Link anfordern
 - **EC-3** — Angenommen die Sitzung ist während der Arbeit abgelaufen, wenn der Nutzer speichert, dann erscheint das Anmeldefenster, nach der Anmeldung geht es zurück auf dieselbe Seite; nicht gespeicherte Eingaben gehen verloren
 - **EC-4** — Angenommen der Nutzer meldet sich in einem Tab ab, wenn er in einem anderen offenen Tab klickt, dann sieht er dort das Anmeldefenster
-- **EC-5** — Angenommen ein Konto wurde gelöscht, wenn sich dieselbe Adresse erneut registriert und auf der Freigabeliste steht, dann entsteht ein neues, leeres Konto
+- **EC-5** — Angenommen ein Konto wurde gelöscht, wenn sich dieselbe Adresse erneut registrieren will, dann braucht sie eine neue Freigabe durch den Betreiber (AC-29); erst danach entsteht bei der Registrierung ein neues, leeres Konto
 - **EC-6** — Angenommen der Nutzer klickt schnell mehrfach auf „Registrieren“, „Speichern“ oder „Konto löschen“, wenn die Anfragen eintreffen, dann wird die Aktion nur einmal ausgeführt
 - **EC-7** — Angenommen beide Authenticator-Geräte sind verloren, wenn der Nutzer sich anmelden will, dann ist über WohnWerk kein Zugang möglich; der Betreiber setzt 2FA im Supabase-Dashboard zurück
 - **EC-8** — Angenommen ein Nutzer ändert seine E-Mail auf eine Adresse, die bereits zu einem anderen Konto gehört, wenn er speichert, dann sieht er „Diese Adresse kann nicht verwendet werden.“ ohne Angabe des Grundes
@@ -115,3 +116,5 @@
 | E-Mail-Änderung ohne Prüfung gegen die Freigabeliste | es kommt keine neue Person hinzu; abgesichert durch Bestätigungslink und Benachrichtigung der alten Adresse | 2026-11-08 |
 | Profil nur mit optionalem Anzeigenamen | Datensparsamkeit (Datenschutzprüfung) | 2026-11-08 |
 | Unbestätigte Registrierungen nach 7 Tagen löschen; Sicherheits-E-Mail bei Passwortänderung und 2FA-Deaktivierung | Ergebnis der Datenschutzprüfung (Speicherbegrenzung, Sicherheit) | 2026-11-08 |
+| Kontolöschung entfernt auch den Freigabelisten-Eintrag (AC-29); EC-5 vorher: „erneute Registrierung möglich, solange die Adresse freigegeben ist“ | Datenschutzprüfung 2026-11-14: AC-19 verspricht „alle seine Daten“; eine Neuregistrierung nach Löschung ist selten und darf eine bewusste neue Freigabe brauchen | 2026-11-14 |
+| Freigabeliste ohne Notizfeld, nur E-Mail-Adresse und Anlagedatum | Datenminimierung (Art. 5 Abs. 1 lit. c DSGVO): Freitext über Eingeladene wird nicht gebraucht | 2026-11-14 |

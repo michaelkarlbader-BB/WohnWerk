@@ -12,7 +12,7 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 
 ## Ebene 1 — Fundament (Daten, Regeln, Theme)
 
-- [ ] T1 [P]  `supabase init` + Basis-Migration: `profiles` (RLS nur eigene Zeilen, bei eingerichteter 2FA nur mit zweiter Stufe), `registration_allowlist` (kein Zugriff aus der App), Funktion für den Before-User-Created-Hook (Fallback: Trigger beim Anlegen, falls der Hook im Free-Tarif fehlt), Trigger „Profil anlegen“, `delete_own_account()`, 2FA-Stufen-Helfer, pg_cron-Job „unbestätigte Registrierungen > 7 Tage löschen“  · files: supabase/config.toml, supabase/migrations/<ts>_konto_basis.sql  · → AC-1, AC-2, AC-4, AC-19, AC-21, AC-26, EC-5
+- [ ] T1 [P]  `supabase init` + Basis-Migration: `profiles` (RLS nur eigene Zeilen, bei eingerichteter 2FA nur mit zweiter Stufe), `registration_allowlist` (nur E-Mail + Anlagedatum, kein Notizfeld; kein Zugriff aus der App), Funktion für den Before-User-Created-Hook (Fallback: Trigger beim Anlegen, falls der Hook im Free-Tarif fehlt), Trigger „Profil anlegen“, `delete_own_account()` (entfernt auch den Freigabelisten-Eintrag zur E-Mail des Kontos), 2FA-Stufen-Helfer, pg_cron-Job „unbestätigte Registrierungen > 7 Tage löschen“  · files: supabase/config.toml, supabase/migrations/<ts>_konto_basis.sql  · → AC-1, AC-2, AC-4, AC-19, AC-21, AC-26, AC-29, EC-5
 - [ ] T2 [P]  Migration Sperre: `login_attempts` (kein Direktzugriff), Funktionen „ist gesperrt?“, „Fehlversuch zählen“ (nur wenn nicht gesperrt), „Fehlversuche löschen“ (nur eigene E-Mail nach Anmeldung), pg_cron-Job „älter als 24 h löschen“  · files: supabase/migrations/<ts>_konto_sperre.sql  · → AC-22, EC-9
 - [ ] T3 [P]  Eingaberegeln (E-Mail, Passwort 12–72, Anzeigename, 2FA-Code, „LÖSCHEN“, interne Rücksprungadresse) + Test  · files: src/features/konto/konto.schema.ts, src/features/konto/konto.schema.test.ts  · → AC-3, AC-8, AC-15, AC-16, AC-20
 - [ ] T4 [P]  Reine Regeln (Sperrentscheidung, Inaktivität 30 Min., Supabase-Fehlercodes → neutrale Meldungen) + Test  · files: src/features/konto/konto.rules.ts, src/features/konto/konto.rules.test.ts  · → AC-6, AC-7, AC-11, AC-22, EC-1, EC-8, EC-9
@@ -28,7 +28,7 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 
 <!-- Zu Beginn dieser Ebene spielt /build die Migrationen aus T1/T2 ins Dev-Projekt ein (supabase link + db push). -->
 
-- [ ] T12 [P]  Serverseitiger Datenzugriff: Profil lesen/ändern, Fehlversuche prüfen/zählen/löschen, eigenes Konto löschen + Test  · files: src/features/konto/konto.data.ts, src/features/konto/konto.data.test.ts  · → AC-15, AC-18, AC-19, AC-21, AC-22
+- [ ] T12 [P]  Serverseitiger Datenzugriff: Profil lesen/ändern, Fehlversuche prüfen/zählen/löschen, eigenes Konto löschen + Test  · files: src/features/konto/konto.data.ts, src/features/konto/konto.data.test.ts  · → AC-15, AC-18, AC-19, AC-21, AC-22, AC-29
 - [ ] T13 [P]  App-eigene Mails über Brevo (Hinweis an alte Adresse, „bereits registriert“, Sicherheitshinweis), deutsche Texte + Test  · files: src/features/konto/mail.integration.ts, src/features/konto/mail.integration.test.ts  · → AC-17, AC-24, AC-27, AC-28
 - [ ] T14 [P]  Proxy: Sitzung am Auth-Server prüfen, Inaktivität (30 Min.) über Aktivitäts-Cookie, Umleitung auf `/anmelden?weiter=…`; Sitzungs-Cookies ohne Ablaufdatum in allen Supabase-Clients + Test  · files: src/proxy.ts, src/proxy.test.ts, src/lib/supabase/proxy.ts, src/lib/supabase/server.ts, src/lib/supabase/client.ts  · → AC-7, AC-8, AC-10, EC-3, EC-4
 - [ ] T15 [P]  Route für Links aus Mails (Bestätigung, Passwort, E-Mail-Wechsel); ungültig/abgelaufen → Weiterleitung auf `/link-ungueltig` + Test  · files: src/app/auth/bestaetigen/route.ts, src/app/auth/bestaetigen/route.test.ts  · → AC-4, AC-11, AC-17, EC-2
@@ -64,7 +64,7 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 
 ## Abdeckung
 
-- Alle AC-1 bis AC-28 sind mindestens einer Aufgabe zugeordnet.
+- Alle AC-1 bis AC-29 sind mindestens einer Aufgabe zugeordnet (AC-29 ergänzt 2026-11-14: T1, T12).
 - EC-7 (beide Authenticatoren verloren) braucht keinen Code: Der Betreiber setzt 2FA im Supabase-Dashboard zurück.
 - Die Datenbank-Prüfungen aus `design.md` → Qualität (AC-2 direkter Aufruf, AC-21 zwei Testkonten, AC-23 ohne Token, AC-26 vordatiertes Konto) brauchen echte, bestätigte Testkonten im Dev-Projekt. Sie laufen beim Abschluss der Ebenen 2 und 3 gegen das Dev-Projekt und in `/qa` – nicht als eigene Aufgabe.
 

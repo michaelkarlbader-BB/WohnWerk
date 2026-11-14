@@ -33,7 +33,7 @@
 ## Beziehungen
 
 - Ein Profil besitzt viele Wohnungen, Mieter und Darlehen – alles hängt am Profil; jeder Nutzer sieht nur seine eigenen Daten. Wird das Konto gelöscht, wird alles Abhängige mitgelöscht; bei eingerichteter 2FA sind Daten nur mit zweiter Stufe sichtbar (ADR-001 in `docs/decisions.md`).
-- Freigabeliste und Fehlversuche stehen für sich und verweisen auf kein Profil (sie betreffen auch Adressen ohne Konto).
+- Freigabeliste und Fehlversuche stehen für sich und verweisen auf kein Profil (sie betreffen auch Adressen ohne Konto). Löscht ein Nutzer sein Konto, wird der Freigabelisten-Eintrag seiner E-Mail-Adresse mitgelöscht (PROJ-1 AC-29).
 - Eine Wohnung hat viele Hausgeld-Einträge, keinen oder mehrere Miteigentümer und über die Zeit viele Mietverträge (höchstens einer gleichzeitig aktiv).
 - Ein Mietvertrag gehört zu genau einer Wohnung und hat einen oder mehrere Mieter (über Vertragspartei); ein Mieter kann über die Zeit mehrere Verträge haben.
 - Ein Mietvertrag hat viele Mietbestandteile und Mietanpassungen; eine Anpassung erzeugt ab ihrem Datum einen neuen Wert des betroffenen Bestandteils.

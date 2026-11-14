@@ -77,6 +77,7 @@ Tests liegen neben dem jeweiligen Modul (`*.test.ts`).
 | AC-21 | A greift auf Daten von B zu, auch direkt mit dem öffentlichen Schlüssel | Zugriffsregeln (RLS) in der Datenbank: nur eigene Zeilen; bei eingerichteter 2FA nur mit zweiter Stufe | Zwei Testkonten, direkte Abfragen gegen jede Tabelle → leer bzw. abgelehnt |
 | AC-22, EC-9 | ≥ 5 Fehlversuche je E-Mail in 15 Min. → 15 Min. Sperre, unabhängig von IP | Zähler in der Datenbank, vor jeder Prüfung abgefragt; zählt Passwort- und 2FA-Fehler | 6 falsche Versuche → 6. abgelehnt, auch mit richtigem Passwort; Versuche mit wechselnder IP |
 | AC-23 | Ohne gültiges CAPTCHA keine Anmeldung/Registrierung/Passwort-Anfrage | Supabase prüft das Turnstile-Token selbst (Attack Protection) – auch bei direkten Aufrufen | Anfrage ohne Token → abgelehnt |
+| AC-29, EC-5 | Nach Kontolöschung ist die Adresse nicht mehr freigegeben | „Eigenes Konto löschen" entfernt den Eintrag zur E-Mail des Kontos in derselben Transaktion | Testkonto löschen → Eintrag weg; erneute Registrierung → Einladungs-Meldung |
 | AC-26 | Unbestätigt nach 7 Tagen gelöscht | Täglicher Datenbank-Job | Testkonto mit vordatiertem Anlagedatum, Job ausführen |
 | EC-6 | Doppelklick | Buttons während der Anfrage gesperrt; Löschen und Registrieren sind wiederholbar ohne Doppelwirkung | Doppelte Anfrage → eine Wirkung |
 
@@ -101,10 +102,10 @@ Tests liegen neben dem jeweiligen Modul (`*.test.ts`).
 
 **Freigabeliste** (`registration_allowlist`) – Betreiber-Daten
 - E-Mail – Text, max. 254, kleingeschrieben gespeichert, eindeutig
-- Notiz – Text, optional, max. 200 (z. B. „Testkonto Wiederherstellung")
+- (kein Notizfeld – Datenminimierung, Entscheidung 2026-11-14)
 - Angelegt am – Zeitstempel
 - Zugriff: **kein** Zugriff aus der App, weder lesend noch schreibend; nur die Prüffunktion beim Anlegen eines Kontos liest sie; Pflege durch den Betreiber im Supabase-Dashboard (Table Editor)
-- Aufbewahrung: bis der Betreiber den Eintrag entfernt
+- Aufbewahrung: bis der Betreiber den Eintrag entfernt **oder** der Nutzer mit dieser Adresse sein Konto löscht (AC-29 – „eigenes Konto löschen" entfernt den Eintrag zur aktuellen E-Mail des Kontos)
 
 **Fehlversuch** (`login_attempts`)
 - E-Mail-Schlüssel – Text, kleingeschrieben (auch für unbekannte Adressen, damit die Sperre nichts verrät)
@@ -155,7 +156,8 @@ Konto (alle Actions verlangen eine angemeldete Sitzung, bei 2FA mit zweiter Stuf
   max. 2 Authenticatoren; Ausschalten → Sicherheitsmail (AC-27)
 - Abmelden (AC-9) · Überall abmelden: alle Sitzungen am Auth-Server beenden (AC-10)
 - Konto löschen – „LÖSCHEN" exakt, Passwort per Anmeldeprüfung (zählt als Versuch), bei 2FA Code;
-  dann Datenbankfunktion „eigenes Konto löschen" (löscht das Konto, alles Abhängige folgt);
+  dann Datenbankfunktion „eigenes Konto löschen" (löscht den Freigabelisten-Eintrag zur E-Mail
+  des Kontos (AC-29) und das Konto, alles Abhängige folgt – in einem Schritt);
   abmelden → /anmelden (AC-19); jede falsche Angabe → nichts gelöscht (AC-20)
 
 Nicht angemeldet → jede Seite außer den abgemeldeten Fenstern, /auth/bestaetigen,
@@ -204,6 +206,7 @@ Die Rate-Limits von Supabase (Authentication → Rate Limits) bleiben auf den St
 | Abmeldung beim Schließen des Browsers: Sitzungs-Cookies ohne Ablaufdatum; 30 Min. Inaktivität über ein eigenes Aktivitäts-Cookie im Proxy plus Aktivitätsmeldung alle 5 Min. beim Tippen | Die Supabase-Einstellung für Inaktivität gibt es nur im Pro-Tarif; Tippen ohne Speichern soll nicht abmelden | Supabase „Inactivity timeout" (Pro) | Etwas eigener Code; Refresh-Token bleibt serverseitig bis zur Abmeldung gültig, ist aber nach Schließen des Browsers nicht mehr im Browser | 2026-11-08 |
 | Proxy prüft die Sitzung bei jeder Anfrage am Auth-Server | Nur so wirkt „Überall abmelden" sofort auf anderen Geräten | nur lokale Prüfung des Tokens | Ein kurzer Netzwerkaufruf pro Seitenaufruf | 2026-11-08 |
 | Mailversand: Supabase-Testversand in der Entwicklung, Brevo (EU-Anbieter, kostenlos bis 300 Mails/Tag) für App-eigene Mails und ab Go-live als SMTP für alle Mails | Keine Domain vorhanden; Brevo hat Sitz in der EU (Frankreich) | Resend, Postmark | Ohne Domain landen App-Mails eventuell im Spam; Domain ist vor `/deploy` Pflicht | 2026-11-08 |
+| Kontolöschung entfernt den Freigabelisten-Eintrag in der Funktion „eigenes Konto löschen" (AC-29); Freigabeliste ohne Notizfeld | Datenschutzprüfung 2026-11-14; Funktion läuft ohnehin mit erweiterten Rechten und ist auf das eigene Konto begrenzt – kein Zugriff der App auf die Liste nötig | Betreiber entfernt Einträge von Hand | Neuregistrierung nach Löschung braucht neue Freigabe | 2026-11-14 |
 | Geplante Aufräum-Jobs mit pg_cron in der Datenbank | Läuft unabhängig von der App, auch im Free-Tarif | Vercel Cron | Läuft nur, solange das Projekt nicht pausiert (PROJ-11 Wachhalter) | 2026-11-08 |
 | Erster geteilter Rahmen-Baustein `src/components/retro/window.tsx` und das Theme entstehen in PROJ-1 | PROJ-1 ist die erste Oberfläche; PROJ-2 übernimmt und erweitert statt neu zu bauen | Anmeldefenster ohne Retro-Stil bis PROJ-2 | PROJ-2 muss den Baustein übernehmen (in `docs/app-shell.md` vermerkt) | 2026-11-08 |
 

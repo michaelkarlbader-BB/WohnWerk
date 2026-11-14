@@ -72,8 +72,9 @@ Für die Datenschutzerklärung: WohnWerk setzt **keine** Analyse-, Werbe- oder T
 - [ ] AVV mit Brevo abschließen; eigene Domain für den Versand vor dem ersten `/deploy` – entschieden in PROJ-1 design.md
 - [ ] Aufbewahrungsdauer des Supabase-Auth-Protokolls (IP-Adressen) ermitteln und eintragen
 - [ ] Aufbewahrung der Brevo-Versandprotokolle und der Vercel-Server-Logs ermitteln und eintragen
-- [ ] Freigabelisten-Eintrag bei Kontolöschung: mitlöschen (vorgeschlagenes AC für PROJ-1) oder bewusst behalten und hier begründen
-- [ ] Notizfeld der Freigabeliste: nur Zweck des Eintrags (z. B. „Testkonto“), keine Angaben über die Person – oder Feld streichen
+- [ ] Freigabelisten-Eintrag bei Kontolöschung mitlöschen – **entschieden 2026-11-14**, Umsetzung per `/refine PROJ-1`
+- [ ] Notizfeld der Freigabeliste streichen – **entschieden 2026-11-14**, Umsetzung per `/refine PROJ-1`
+- [ ] Browser-Tab-Titel ohne Detailnamen – **entschieden 2026-11-14**, Umsetzung per `/refine PROJ-2` (die Kriterien zu Gerätespeicher und Protokollen hat der Product Owner nicht übernommen)
 - [ ] Datenschutzerklärung muss die Tabelle „Gerätespeicher“ und Cloudflare/Brevo/Vercel/Supabase nennen
 - [ ] Datenschutzerklärung und Impressum erstellen (Generator oder Anwalt) – vor dem ersten `/deploy`
 - [ ] Vor dem Angebot an Dritte: Rollenklärung für Mieterdaten (siehe Fragen unten)
