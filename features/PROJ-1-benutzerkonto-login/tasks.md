@@ -42,8 +42,8 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 
 ## Ebene 3 — Server Actions
 
-- [ ] T23 [P]  Auth-Actions: anmelden, 2FA-Code prüfen, registrieren, Bestätigung erneut senden, Passwort vergessen, neues Passwort setzen, abmelden, überall abmelden, Aktivität melden + Test  · files: src/features/konto/auth.actions.ts, src/features/konto/auth.actions.test.ts  · → AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7, AC-8, AC-9, AC-10, AC-11, AC-13, AC-22, AC-23, AC-24, AC-27, EC-1, EC-6, EC-9
-- [ ] T24 [P]  Konto-Actions: Anzeigename, E-Mail, Passwort ändern; 2FA einrichten/bestätigen/zweiten Faktor hinzufügen/ausschalten; Konto löschen + Test  · files: src/features/konto/konto.actions.ts, src/features/konto/konto.actions.test.ts  · → AC-12, AC-14, AC-15, AC-16, AC-17, AC-19, AC-20, AC-27, EC-6, EC-8
+- [x] T23 [P]  Auth-Actions: anmelden, 2FA-Code prüfen, registrieren, Bestätigung erneut senden, Passwort vergessen, neues Passwort setzen, abmelden, überall abmelden, Aktivität melden + Test  · files: src/features/konto/auth.actions.ts, src/features/konto/auth.actions.test.ts  · → AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7, AC-8, AC-9, AC-10, AC-11, AC-13, AC-22, AC-23, AC-24, AC-27, EC-1, EC-6, EC-9
+- [x] T24 [P]  Konto-Actions: Anzeigename, E-Mail, Passwort ändern; 2FA einrichten/bestätigen/zweiten Faktor hinzufügen/ausschalten; Konto löschen + Test  · files: src/features/konto/konto.actions.ts, src/features/konto/konto.actions.test.ts  · → AC-12, AC-14, AC-15, AC-16, AC-17, AC-19, AC-20, AC-27, EC-6, EC-8
 
 ## Ebene 4 — Oberfläche
 
