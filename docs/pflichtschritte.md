@@ -19,9 +19,9 @@
 Ab hier ist WohnWerk öffentlich erreichbar: Jeder Aufruf verarbeitet IP-Adressen, und das CAPTCHA lädt.
 
 - [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Supabase**: gilt über die Nutzungsbedingungen; erledigt, sobald die aktuelle DPA-Fassung als PDF abgelegt ist.
-- [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Vercel** abschließen.
-- [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Cloudflare** (Turnstile) abschließen.
-- [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Brevo** abschließen.
+- [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — **Hosting mit AVV:** Vercel Hobby ist nicht abgedeckt (DPA gilt nur für Pro/Enterprise, Hobby nur nicht-kommerziell). Entscheidung nötig: Vercel Pro, anderer Anbieter mit AVV im kostenlosen Tarif, oder schriftliche Klärung mit Vercel. Danach AVV-Fassung als PDF ablegen.
+- [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Cloudflare**: gilt über die Self-Serve-Bedingungen (§6.1); erledigt, sobald die aktuelle DPA-Fassung als PDF abgelegt ist.
+- [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Brevo**: im Brevo-Konto bzw. auf brevo.com/legal prüfen, ob er Teil der Nutzungsbedingungen ist oder aktiv abgeschlossen werden muss; Fassung als PDF ablegen.
 - [ ] **PFLICHT** · rechtlich (Art. 13 DSGVO) — Inhalt der **Datenschutzerklärung** liefern (Generator oder Anwalt) – nennt Supabase, Vercel, Cloudflare, Brevo und die Tabelle „Gerätespeicher“ aus `docs/privacy.md`. Ohne Inhalt keine öffentlich erreichbare Seite.
 - [ ] **PFLICHT** · technisch/Datenschutz — Vercel-Funktionsregion auf **Frankfurt (fra1)** festlegen.
 - [ ] **PFLICHT** · technisch — Testumgebung nur mit dem **Supabase-Dev-Projekt** verbinden, nie mit Live-Schlüsseln; Turnstile-Hostname und Supabase-Redirect für `test.wohnwerk-mb.de` eingetragen (PROJ-1 T9, T19).

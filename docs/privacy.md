@@ -47,9 +47,9 @@ Für die Datenschutzerklärung: WohnWerk setzt **keine** Analyse-, Werbe- oder T
 | Dienst | Was er verarbeitet | Region | AVV abgeschlossen | Außerhalb angemessener Länder? |
 |---------|-------------------|--------|------------------|----------------|
 | Supabase | alle Anwendungsdaten, Auth | Prod: eu-central-1 (Frankfurt); Dev/Test: eu-west-2 (London, nur Testdaten – UK-Angemessenheitsbeschluss) | ☐ – DPA ist Teil der Nutzungsbedingungen (Abschn. 7(b), Version 1 vom 01.08.2026); PDF ablegen | Vertragspartner Supabase Pte. Ltd. (Singapur); Übermittlung über EU-Standardvertragsklauseln (Modul 2) und UK-Zusatz im DPA |
-| Vercel | Anfragen, Server-Logs (IP, Adressen, Fehlermeldungen) | Funktionsregion **nicht ermittelt** (Vorschlag: fra1) | ☐ | US-Unternehmen (EU-US DPF prüfen) |
-| Cloudflare Turnstile (CAPTCHA) | IP, Browser-/Gerätesignale | global – **nicht ermittelt** | ☐ | US-Unternehmen (EU-US DPF prüfen) |
-| Brevo (E-Mail-Versand) | E-Mail-Adresse, Mailinhalt, Versandprotokolle (Aufbewahrung **nicht ermittelt**) | EU (Sitz Frankreich) – Rechenzentrum **nicht ermittelt** | ☐ | nein (EU-Unternehmen) |
+| Vercel | Anfragen, Server-Logs (IP, Adressen, Fehlermeldungen) | Funktionsregion **nicht ermittelt** (Vorschlag: fra1) | ☒ **nicht abgedeckt im Hobby-Tarif** – DPA (Stand 17.03.2026) gilt laut §1 nur für Pro und Enterprise | Vercel Inc. (USA); im DPA EU-Standardvertragsklauseln (Modul 2); Hobby nur für „personal or non-commercial use“ und Inhalte dürfen für KI-Training genutzt werden (Terms §3, §4) |
+| Cloudflare Turnstile (CAPTCHA) | IP, Browser-/Gerätesignale | global – **nicht ermittelt** | ☐ – DPA (v6.4, 03.04.2026) ist Teil der Self-Serve-Bedingungen (§6.1); PDF ablegen | Cloudflare, Inc. (USA); EU-US Data Privacy Framework, ersatzweise EU-Standardvertragsklauseln. **Achtung:** Für die Verbesserung von Turnstile ist Cloudflare eigener Verantwortlicher (Turnstile Privacy Addendum §4) – in der Datenschutzerklärung nennen |
+| Brevo (E-Mail-Versand) | E-Mail-Adresse, Mailinhalt, Versandprotokolle (Aufbewahrung **nicht ermittelt**) | EU (Sitz Frankreich) – Rechenzentrum **nicht ermittelt** | ☐ – **nicht ermittelt** (Rechtsseiten von Brevo automatisch nicht lesbar; im Brevo-Konto prüfen) | nein (EU-Unternehmen) |
 | Supabase-Testversand (nur Entwicklung) | E-Mail-Adresse, Mailinhalt | wie Supabase | über Supabase-AVV | wie Supabase |
 
 ## Betroffenenrechte
@@ -67,8 +67,8 @@ Für die Datenschutzerklärung: WohnWerk setzt **keine** Analyse-, Werbe- oder T
 ## Offene Punkte
 
 - [ ] AVV mit Supabase: kein eigener Abschluss nötig, der DPA gilt über die Nutzungsbedingungen – aktuelle Fassung (https://supabase.com/legal/dpa) als PDF ablegen
-- [ ] AVV mit Vercel abschließen; Funktionsregion auf Frankfurt (fra1) festlegen – bei `/deploy`
-- [ ] AVV mit Cloudflare (Turnstile) abschließen – entschieden in PROJ-1 design.md
+- [ ] **Hosting entscheiden:** Vercel Hobby hat keinen AVV (DPA nur für Pro/Enterprise) und ist nur für nicht-kommerzielle Nutzung erlaubt – Vercel Pro, anderer Anbieter oder Klärung mit Vercel; danach Funktionsregion Frankfurt festlegen
+- [ ] AVV mit Cloudflare: gilt über die Self-Serve-Bedingungen – aktuelle DPA-Fassung (https://www.cloudflare.com/cloudflare-customer-dpa/) als PDF ablegen
 - [ ] AVV mit Brevo abschließen; Versand-Domain `wohnwerk-mb.de` bei Brevo verifizieren (SPF, DKIM, DMARC) vor dem ersten `/deploy` – entschieden in PROJ-1 design.md
 - [ ] Aufbewahrungsdauer des Supabase-Auth-Protokolls (IP-Adressen) ermitteln und eintragen
 - [ ] Aufbewahrung der Brevo-Versandprotokolle und der Vercel-Server-Logs ermitteln und eintragen
