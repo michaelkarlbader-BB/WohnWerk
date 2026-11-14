@@ -12,13 +12,13 @@
 
 - [x] **PFLICHT** · technisch — Supabase-Dev-Projekt anlegen. → erledigt 2026-11-14: Region **eu-west-2 (London)** statt Frankfurt, bewusst so entschieden – UK hat einen EU-Angemessenheitsbeschluss, im Dev-Projekt liegen nur Testdaten. Prod bleibt Frankfurt (Stufe 3).
 - [x] **PFLICHT** · technisch — Test-Schlüssel des Dev-Projekts (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) selbst in `.env.local` eintragen – nie Live-Schlüssel. → erledigt 2026-11-14 (URL und Publishable Key, Format geprüft)
-- [ ] Empfohlen — AVV mit Supabase gleich mit annehmen (Organization Settings → Legal Documents); spätestens in Stufe 2 Pflicht.
+- [ ] Empfohlen — AVV mit Supabase: gilt automatisch über die Nutzungsbedingungen (Abschn. 7(b)); aktuelle Fassung von https://supabase.com/legal/dpa als PDF ablegen; spätestens in Stufe 2 Pflicht.
 
 ## Stufe 2 – vor der Testumgebung test.wohnwerk-mb.de (erstes `/deploy`) <!-- gate:test -->
 
 Ab hier ist WohnWerk öffentlich erreichbar: Jeder Aufruf verarbeitet IP-Adressen, und das CAPTCHA lädt.
 
-- [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Supabase** abschließen (Organization Settings → Legal Documents).
+- [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Supabase**: gilt über die Nutzungsbedingungen; erledigt, sobald die aktuelle DPA-Fassung als PDF abgelegt ist.
 - [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Vercel** abschließen.
 - [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Cloudflare** (Turnstile) abschließen.
 - [ ] **PFLICHT** · rechtlich (Art. 28 DSGVO) — AVV mit **Brevo** abschließen.

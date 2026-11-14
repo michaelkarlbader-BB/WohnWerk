@@ -46,7 +46,7 @@ Für die Datenschutzerklärung: WohnWerk setzt **keine** Analyse-, Werbe- oder T
 
 | Dienst | Was er verarbeitet | Region | AVV abgeschlossen | Außerhalb angemessener Länder? |
 |---------|-------------------|--------|------------------|----------------|
-| Supabase | alle Anwendungsdaten, Auth | Prod: eu-central-1 (Frankfurt); Dev/Test: eu-west-2 (London, nur Testdaten – UK-Angemessenheitsbeschluss) | ☐ | US-Unternehmen, Hosting in der EU (EU-US DPF prüfen) |
+| Supabase | alle Anwendungsdaten, Auth | Prod: eu-central-1 (Frankfurt); Dev/Test: eu-west-2 (London, nur Testdaten – UK-Angemessenheitsbeschluss) | ☐ – DPA ist Teil der Nutzungsbedingungen (Abschn. 7(b), Version 1 vom 01.08.2026); PDF ablegen | Vertragspartner Supabase Pte. Ltd. (Singapur); Übermittlung über EU-Standardvertragsklauseln (Modul 2) und UK-Zusatz im DPA |
 | Vercel | Anfragen, Server-Logs (IP, Adressen, Fehlermeldungen) | Funktionsregion **nicht ermittelt** (Vorschlag: fra1) | ☐ | US-Unternehmen (EU-US DPF prüfen) |
 | Cloudflare Turnstile (CAPTCHA) | IP, Browser-/Gerätesignale | global – **nicht ermittelt** | ☐ | US-Unternehmen (EU-US DPF prüfen) |
 | Brevo (E-Mail-Versand) | E-Mail-Adresse, Mailinhalt, Versandprotokolle (Aufbewahrung **nicht ermittelt**) | EU (Sitz Frankreich) – Rechenzentrum **nicht ermittelt** | ☐ | nein (EU-Unternehmen) |
@@ -66,7 +66,7 @@ Für die Datenschutzerklärung: WohnWerk setzt **keine** Analyse-, Werbe- oder T
 
 ## Offene Punkte
 
-- [ ] AVV mit Supabase abschließen (Dashboard → Legal/DPA)
+- [ ] AVV mit Supabase: kein eigener Abschluss nötig, der DPA gilt über die Nutzungsbedingungen – aktuelle Fassung (https://supabase.com/legal/dpa) als PDF ablegen
 - [ ] AVV mit Vercel abschließen; Funktionsregion auf Frankfurt (fra1) festlegen – bei `/deploy`
 - [ ] AVV mit Cloudflare (Turnstile) abschließen – entschieden in PROJ-1 design.md
 - [ ] AVV mit Brevo abschließen; Versand-Domain `wohnwerk-mb.de` bei Brevo verifizieren (SPF, DKIM, DMARC) vor dem ersten `/deploy` – entschieden in PROJ-1 design.md
