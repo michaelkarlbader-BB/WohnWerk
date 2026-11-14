@@ -34,6 +34,7 @@ Bewusst **später**: Kontoauszug-Abruf mit (möglichst automatischer) Buchungszu
 - Environment strategy: two-projects
 - Data region: eu-central-1 (Frankfurt)
 - Hosting: Vercel (vorläufig, wird bei `/deploy` bestätigt)
+- Domain: wohnwerk-mb.de (vorhanden, erfasst 2026-11-14; Produktiv-Adresse und Absender-Domain für Mails)
 - Data protection law: GDPR (EU/DE)
 - Data protection stance: standard
 - Design system: siehe `docs/design-system.md` (Retro-Stil frühe 2000er, „Klassisch grau“)

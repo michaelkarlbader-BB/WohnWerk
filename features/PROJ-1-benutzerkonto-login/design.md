@@ -177,7 +177,7 @@ Alles andere ist vorhanden (`@supabase/ssr`, `@supabase/supabase-js`, `zod`, `re
 
 | Einstellung | Wo | Wann | Wert | Warum | → AC |
 | --- | --- | --- | --- | --- | --- |
-| Turnstile-Widget anlegen | Cloudflare Dashboard → Turnstile → Add widget (Hostname `localhost`, später die Produktiv-Domain) | now | Modus „Managed"; Site Key → `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `.env.local` | CAPTCHA | AC-23 |
+| Turnstile-Widget anlegen | Cloudflare Dashboard → Turnstile → Add widget (Hostname `localhost`, später `wohnwerk-mb.de`) | now | Modus „Managed"; Site Key → `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `.env.local` | CAPTCHA | AC-23 |
 | CAPTCHA in Supabase einschalten | Supabase (Dev) → Authentication → Attack Protection → Enable Captcha protection | now | Anbieter Turnstile, Secret Key aus Cloudflare | Supabase prüft das Token selbst | AC-23 |
 | E-Mail-Bestätigung an | Authentication → Sign In / Providers → Email | now | „Confirm email" an, „Secure email change" **aus** (die App benachrichtigt die alte Adresse selbst) | Konto erst nach Bestätigung; Verhalten aus AC-17 | AC-1, AC-17 |
 | Mindestlänge Passwort | Authentication → Sign In / Providers → Email | now | 12 Zeichen | zweite Prüfung neben der App | AC-3 |
@@ -187,8 +187,8 @@ Alles andere ist vorhanden (`@supabase/ssr`, `@supabase/supabase-js`, `zod`, `re
 | Eigene Adresse freigeben | Table Editor → `registration_allowlist` → Insert row | now | deine E-Mail-Adresse (+ ggf. Testadresse) | sonst kannst du dich nicht registrieren | AC-1 |
 | Brevo-Konto und API-Schlüssel | brevo.com → kostenloses Konto → SMTP & API → API Keys; Absender unter Senders verifizieren | now | API-Schlüssel → `BREVO_API_KEY`, verifizierte Absenderadresse → `MAIL_FROM_ADDRESS` in `.env.local` | App-eigene Mails (alte Adresse, „bereits registriert", Sicherheitshinweis) | AC-17, AC-24, AC-27 |
 | AVV abschließen | Supabase → Organization Settings → Legal Documents; Brevo → Konto → DPA; Cloudflare → DPA | now | annehmen | Datenschutz (`docs/privacy.md`) | — |
-| Eigene Domain + SMTP | Domain kaufen; bei Brevo Domain verifizieren (DNS: SPF, DKIM, DMARC); Supabase (Prod) → Authentication → Emails → SMTP Settings mit Brevo-SMTP | go-live | Absender z. B. `noreply@<domain>` | Supabase-Testversand ist auf wenige Mails/Stunde und Team-Adressen begrenzt | AC-28 |
-| Alle obigen Auth-Einstellungen im Prod-Projekt wiederholen | Supabase (Prod) – gleiche Pfade; Site URL = Produktiv-URL; Turnstile-Hostname = Produktiv-Domain | go-live | wie oben | Einstellungen liegen je Projekt | alle |
+| Eigene Domain + SMTP | Domain `wohnwerk-mb.de` (vorhanden); bei Brevo Domain verifizieren (DNS: SPF, DKIM, DMARC); Supabase (Prod) → Authentication → Emails → SMTP Settings mit Brevo-SMTP | go-live | Absender z. B. `noreply@wohnwerk-mb.de` | Supabase-Testversand ist auf wenige Mails/Stunde und Team-Adressen begrenzt | AC-28 |
+| Alle obigen Auth-Einstellungen im Prod-Projekt wiederholen | Supabase (Prod) – gleiche Pfade; Site URL = Produktiv-URL; Turnstile-Hostname = `wohnwerk-mb.de` | go-live | wie oben | Einstellungen liegen je Projekt | alle |
 
 Die Rate-Limits von Supabase (Authentication → Rate Limits) bleiben auf den Standardwerten. Die Sperre aus AC-22 regelt die App selbst.
 

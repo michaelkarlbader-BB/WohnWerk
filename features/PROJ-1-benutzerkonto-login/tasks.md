@@ -59,7 +59,7 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 ## Ebene 5 — Zusammenbau und Go-live
 
 - [ ] T33  Konto-Fenster mit drei Registerkarten + Seite `/konto`  · files: src/features/konto/components/konto-fenster.tsx, src/app/(angemeldet)/konto/page.tsx  · → AC-15, AC-16, AC-17, AC-18, AC-19, AC-20
-- [ ] T34 [user go-live]  Eigene Domain + SMTP über Brevo  · where: Domain kaufen; Brevo → Domain verifizieren (DNS: SPF, DKIM, DMARC); Supabase (Prod) → Authentication → Emails → SMTP Settings mit Brevo-SMTP; Absender z. B. `noreply@<domain>`  · → AC-28
+- [ ] T34 [user go-live]  Eigene Domain + SMTP über Brevo  · where: Domain `wohnwerk-mb.de` (vorhanden); Brevo → Domain verifizieren (DNS: SPF, DKIM, DMARC); Supabase (Prod) → Authentication → Emails → SMTP Settings mit Brevo-SMTP; Absender z. B. `noreply@<domain>`  · → AC-28
 - [ ] T35 [user go-live]  Alle Auth-Einstellungen (T16–T22) im Prod-Projekt wiederholen  · where: Supabase (Prod), gleiche Pfade; Site URL = Produktiv-URL, Redirect `https://<production-url>/auth/bestaetigen`; Turnstile-Hostname = Produktiv-Domain  · → alle
 
 ## Abdeckung

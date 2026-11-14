@@ -69,7 +69,7 @@ Für die Datenschutzerklärung: WohnWerk setzt **keine** Analyse-, Werbe- oder T
 - [ ] AVV mit Supabase abschließen (Dashboard → Legal/DPA)
 - [ ] AVV mit Vercel abschließen; Funktionsregion auf Frankfurt (fra1) festlegen – bei `/deploy`
 - [ ] AVV mit Cloudflare (Turnstile) abschließen – entschieden in PROJ-1 design.md
-- [ ] AVV mit Brevo abschließen; eigene Domain für den Versand vor dem ersten `/deploy` – entschieden in PROJ-1 design.md
+- [ ] AVV mit Brevo abschließen; Versand-Domain `wohnwerk-mb.de` bei Brevo verifizieren (SPF, DKIM, DMARC) vor dem ersten `/deploy` – entschieden in PROJ-1 design.md
 - [ ] Aufbewahrungsdauer des Supabase-Auth-Protokolls (IP-Adressen) ermitteln und eintragen
 - [ ] Aufbewahrung der Brevo-Versandprotokolle und der Vercel-Server-Logs ermitteln und eintragen
 - [ ] Freigabelisten-Eintrag bei Kontolöschung mitlöschen – **entschieden 2026-11-14**, Umsetzung per `/refine PROJ-1`
