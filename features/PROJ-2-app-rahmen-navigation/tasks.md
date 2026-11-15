@@ -21,7 +21,7 @@ Pfade ohne Präfix liegen unter `src/components/rahmen/`; Routen in `(angemeldet
 
 ## Ebene 2 — Rahmen-Schnittstelle
 
-- [ ] T5  Rahmen-Kontext: Bereich einrichten (Aktionen neu/bearbeiten/löschen/aktualisieren mit Funktion + verfügbar, Anzahl, Detailtitel, ungespeichert), Bestätigung, Laden (gezählt), Online/Offline (Offline beendet Ladeanzeigen), angesteuertes Ziel (sofortige Rückmeldung), geschützte Navigation + geschützter Link, „ohne Rückfrage verlassen“; laufende Aktion gesperrt; Zurücksetzen beim Verlassen der Seite + Test  · files: src/components/rahmen/rahmen-kontext.tsx, src/components/rahmen/rahmen-kontext.test.tsx  · → AC-13, AC-17, AC-21, AC-22, AC-23, AC-27, AC-33, AC-35, EC-3, EC-9, EC-10
+- [x] T5  Rahmen-Kontext: Bereich einrichten (Aktionen neu/bearbeiten/löschen/aktualisieren mit Funktion + verfügbar, Anzahl, Detailtitel, ungespeichert), Bestätigung, Laden (gezählt), Online/Offline (Offline beendet Ladeanzeigen), angesteuertes Ziel (sofortige Rückmeldung), geschützte Navigation + geschützter Link, „ohne Rückfrage verlassen“; laufende Aktion gesperrt; Zurücksetzen beim Verlassen der Seite + Test  · files: src/components/rahmen/rahmen-kontext.tsx, src/components/rahmen/rahmen-kontext.test.tsx  · → AC-13, AC-17, AC-21, AC-22, AC-23, AC-27, AC-33, AC-35, EC-3, EC-9, EC-10
 
 ## Ebene 3 — Leisten und Bausteine
 
