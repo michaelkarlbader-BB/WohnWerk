@@ -2,7 +2,7 @@ import { AnmeldenForm } from '@/features/konto/components/anmelden-form'
 import { sichereRuecksprungadresse } from '@/features/konto/konto.schema'
 import { createClient } from '@/lib/supabase/server'
 
-export const metadata = { title: 'WohnWerk – Anmelden' }
+export const metadata = { title: 'Anmelden' }
 
 /**
  * A visitor whose session only owes the second factor starts at the code step (the proxy

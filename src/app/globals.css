@@ -7,9 +7,11 @@
    shadows, depth only through 3D edges, system fonts. shadcn/ui components are
    themed exclusively from this file - never by editing src/components/ui. */
 
-/* Dark applies when an ancestor carries .dark, or - as long as nothing sets
-   .light on <html> - when the OS prefers dark. Used both by `dark:` utilities and
-   by the token block below, so the dark values are written exactly once. */
+/* Dark is bound to the class: next-themes (src/components/rahmen/darstellung-anbieter.tsx)
+   puts .dark or .light on <html> before the first paint - also for "Wie System".
+   The OS preference only counts while neither class is set (JavaScript switched off).
+   Used both by `dark:` utilities and by the token block below, so the dark values are
+   written exactly once. */
 @custom-variant dark {
   &:where(.dark, .dark *) {
     @slot;
@@ -496,5 +498,55 @@
         padding: 0;
       }
     }
+  }
+}
+
+/* ---- Frame (PROJ-2) ---------------------------------------------------- */
+@layer retro {
+  /* Window height = visible screen height; dvh follows the phone's address bar. */
+  .rahmen-hoehe {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* Segment progress bar of the status bar: a block of segments running through. */
+  .segment-fortschritt {
+    background-image: repeating-linear-gradient(
+      to right,
+      hsl(var(--primary)) 0 8px,
+      transparent 8px 10px
+    );
+    background-repeat: no-repeat;
+    background-size: 40% 100%;
+    animation: segment-lauf 1.6s steps(16) infinite;
+  }
+
+  /* Menus and drawer: the chosen entry in primary, as in classic menus. */
+  .auswahl-primaer {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+}
+
+@keyframes segment-lauf {
+  from { background-position: -66.7% 0; }
+  to { background-position: 166.7% 0; }
+}
+
+/* Reduced motion: nothing slides or runs; the progress bar stands still, fully segmented. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .segment-fortschritt {
+    animation: none !important;
+    background-size: 100% 100%;
+    background-position: 0 0;
   }
 }

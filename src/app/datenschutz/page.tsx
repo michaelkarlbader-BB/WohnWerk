@@ -12,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-export const metadata: Metadata = { title: 'WohnWerk – Datenschutz' }
+export const metadata: Metadata = { title: 'Datenschutz' }
 
 // Draft text, pending legal review by the operator (docs/pflichtschritte.md, Stufe 2).
 // Source of truth for the facts: docs/privacy.md – change both together.

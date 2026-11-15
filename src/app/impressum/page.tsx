@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 import { MessageBox, Window } from '@/components/retro/window'
 
-export const metadata: Metadata = { title: 'WohnWerk – Impressum' }
+export const metadata: Metadata = { title: 'Impressum' }
 
 // Placeholder until the operator supplies the text (docs/pflichtschritte.md, Stufe 3).
 export default function ImpressumPage() {

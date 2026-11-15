@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { MessageBox, Window } from '@/components/retro/window'
 import { Button } from '@/components/ui/button'
 
-export const metadata: Metadata = { title: 'WohnWerk – Link ungültig' }
+export const metadata: Metadata = { title: 'Link ungültig' }
 
 type Props = {
   searchParams: Promise<{ art?: string | string[] }>

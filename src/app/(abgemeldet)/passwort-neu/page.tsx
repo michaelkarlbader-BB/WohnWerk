@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { PasswortNeuForm } from '@/features/konto/components/passwort-neu-form'
 import { wiederherstellungsEmail } from '@/features/konto/konto.data'
 
-export const metadata: Metadata = { title: 'WohnWerk – Neues Passwort' }
+export const metadata: Metadata = { title: 'Neues Passwort' }
 
 export default async function PasswortNeuPage() {
   // Only the session a recovery link created moments ago may set a new password (BUG-1);
