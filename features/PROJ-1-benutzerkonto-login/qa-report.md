@@ -445,6 +445,32 @@ _BUG-1 bis BUG-12 aus dem Erstlauf: Status siehe Tabelle oben. Neue Befunde dies
 - CSP ohne `script-src` und per JavaScript lesbare Auth-Cookies (Bibliotheksvorgabe): Eine XSS würde die Sitzung kosten. Gefunden wurden 0 XSS-Senken
 - Im Arbeitsbaum liegen unabhängig von diesem Feature `docs/privacy.md` (geändert) und `AGENTS.md` (ungetrackt), nicht committet
 
+## Aufgezeichneter Nutzertest (2026-11-15)
+
+Der Nutzer hat die folgenden neun Schritte selbst ausgeführt und mit „PASST ALLES“ bestätigt. Gerät und Browser hat er nicht angegeben. Diese Punkte ersetzen die NOT VERIFIED-Laufzeitvermerke für die genannten Kriterien. Sie gelten nur für den getesteten Ablauf, nicht für Randfälle.
+
+- [x] Registrieren mit freigegebener Adresse, deutsche Bestätigungsmail, Link führt zu „Wohnungen“ – AC-1, AC-4, AC-28: vom Nutzer bestätigt, Gerät nicht angegeben, 2026-11-15
+- [x] Nicht freigegebene Adresse → „nur auf Einladung“ – AC-2: vom Nutzer bestätigt, 2026-11-15
+- [x] Falsches Passwort → „E-Mail oder Passwort falsch.“, nach 5 Fehlversuchen Sperrmeldung; Abmelden – AC-6, AC-22, AC-9: vom Nutzer bestätigt, 2026-11-15
+- [x] Normal anmelden, `/konto` zeigt Anzeigename, E-Mail und 2FA-Status, Anzeigename änderbar – AC-5, AC-15, AC-18: vom Nutzer bestätigt, 2026-11-15
+- [x] „Passwort vergessen“: Mail, neues Passwort über den Link, Sicherheitshinweis; `/passwort-neu` ohne Link mit normaler Sitzung abgewiesen – AC-11, AC-27, BUG-1: vom Nutzer bestätigt, 2026-11-15
+- [x] 2FA einrichten, beim erneuten Anmelden wird der Code verlangt – AC-12, AC-13: vom Nutzer bestätigt, 2026-11-15
+- [x] Passwort im Konto ändern nur mit richtigem aktuellem Passwort – AC-16: vom Nutzer bestätigt, 2026-11-15
+- [x] Zwei Tabs, Abmelden über die Statusleiste, anderer Tab zeigt beim nächsten Klick das Anmeldefenster – EC-4, BUG-8: vom Nutzer bestätigt, 2026-11-15
+- [x] Testkonto löschen (Passwort, Code, „LÖSCHEN“), Weiterleitung zur Anmeldung, Neuregistrierung ohne neue Freigabe gesperrt – AC-19, AC-29, EC-5: vom Nutzer bestätigt, 2026-11-15
+
+Weiterhin nicht vom Nutzer getestet, also NOT VERIFIED:
+- AC-7 (Inaktivität und Schließen des Browsers)
+- AC-10 (auf allen Geräten abmelden)
+- AC-14 (zweiter Authenticator bzw. 2FA ausschalten)
+- AC-17 (E-Mail ändern)
+- AC-20 (Löschen mit falschen Angaben)
+- AC-21 mit zwei Konten
+- AC-24 (bereits registrierte Adresse)
+- AC-26
+- EC-1, EC-3, EC-6, EC-8
+- Darstellung am Handy und Cross-Browser
+
 ## Zusammenfassung
 - **Abnahmekriterien:** 29 AC, 9 EC
   - In diesem Lauf zur Laufzeit belegt: AC-3, AC-8, AC-9 (ohne echte Sitzung), AC-13 (Fehlerpfade), AC-22 (Sperrmechanik), AC-23, AC-25 (Links), EC-2
@@ -453,7 +479,7 @@ _BUG-1 bis BUG-12 aus dem Erstlauf: Status siehe Tabelle oben. Neue Befunde dies
 - **Bugs aus dem Erstlauf:** 11 von 12 geschlossen, BUG-4 als Ausnahme EX-1 akzeptiert
 - **Neue Bugs:** 10 (0 Critical, 0 High, 3 Medium, 7 Low), Open: 0, Deferred: 10 (Entscheidung Nutzer)
 - **Security:** 15 Prüfungen belegt, 3 NOT VERIFIED (Autorisierung zur Laufzeit, Rate Limiting – nicht implementiert, angemeldete API-Antworten); neue Befunde BUG-13, -14, -15, -17, -19, -22
-- **Production Ready:** **NEIN – nicht verifiziert.** Es gibt keine blockierenden Bugs mehr. Die Kernabläufe (Registrieren, Anmelden, Passwort-Reset, Konto ändern/löschen) wurden aber wegen des CAPTCHAs in keinem Lauf zur Laufzeit ausgeführt. Freigabe nur nach einem **aufgezeichneten Test durch den Nutzer** (Liste bei der Übergabe) oder nach `/e2e-tests`
-- **Empfehlung:** Nutzertest durchführen und hier eintragen, dann Approved. Die 10 Deferred-Bugs später gesammelt mit `/build PROJ-1 deferred` beheben, zuerst BUG-13 und BUG-14
+- **Production Ready:** **JA** – keine Open-Bugs, keine Critical/High; die Kernabläufe hat der Nutzer am 2026-11-15 getestet (Abschnitt oben). Die NOT VERIFIED-Punkte oben bleiben offen, ebenso die 10 Deferred-Bugs
+- **Empfehlung:** `/e2e-tests` für Anmelden und Registrieren als dauerhaftes Sicherheitsnetz; die Deferred-Bugs gesammelt mit `/build PROJ-1 deferred` beheben, zuerst BUG-13 und BUG-14. Beides blockiert `/deploy` nicht
 
 > „Production Ready: JA“ hieße nur *keine Critical/High-Bugs*, nicht, dass alles geprüft wurde. Jedes NOT VERIFIED oben bleibt offen.

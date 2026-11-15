@@ -25,7 +25,7 @@
 
 | ID | Feature | Description | Status | Spec | Created |
 |----|---------|-------------|--------|------|---------|
-| PROJ-1 | Benutzerkonto & Login | Registrieren, Anmelden, Abmelden und Konto löschen – jeder Nutzer sieht nur seine eigenen Daten. | In Review | [PROJ-1-benutzerkonto-login](PROJ-1-benutzerkonto-login/) | 2026-11-02 |
+| PROJ-1 | Benutzerkonto & Login | Registrieren, Anmelden, Abmelden und Konto löschen – jeder Nutzer sieht nur seine eigenen Daten. | Approved | [PROJ-1-benutzerkonto-login](PROJ-1-benutzerkonto-login/) | 2026-11-02 |
 | PROJ-2 | App-Rahmen & Navigation | Retro-Programmfenster mit Menü-, Werkzeug- und Statusleiste, Navigation zwischen den Bereichen und Handy-Ansicht. | Tasked | [PROJ-2-app-rahmen-navigation](PROJ-2-app-rahmen-navigation/) | 2026-11-02 |
 | PROJ-3 | Wohnungen | Stammdaten je Wohnung erfassen: Objekt, WEG, Kauf, Eigentumsverhältnis, Steuerdaten und Hausgeld mit Historie. | Roadmap | — | 2026-11-02 |
 | PROJ-4 | Abschreibungsplan | Berechnet je Wohnung den AfA-Plan (linear, degressiv, Sonder-AfA § 7b) mit Jahresbeträgen und Restwert. | Roadmap | — | 2026-11-02 |
