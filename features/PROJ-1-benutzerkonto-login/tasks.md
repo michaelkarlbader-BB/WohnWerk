@@ -19,9 +19,9 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 - [x] T5 [P]  Theme (Design-System-Werte hell/dunkel, Systemschrift, `lang="de"`) + geteilter Fenster-Baustein  · files: src/app/globals.css, src/app/layout.tsx, src/components/retro/window.tsx  · → AC-5, AC-18, AC-25
 - [x] T6 [P]  Deutsche Supabase-Mailvorlagen (Bestätigung, Passwort zurücksetzen, E-Mail-Wechsel), Links auf `/auth/bestaetigen`  · files: supabase/templates/bestaetigen.html, supabase/templates/passwort-zuruecksetzen.html, supabase/templates/email-aendern.html  · → AC-1, AC-11, AC-17, AC-28
 - [x] T7 [P]  Paket `@marsidev/react-turnstile`, CAPTCHA-Feld, Variablennamen mit Dummy-Werten  · files: package.json, package-lock.json, .env.local.example, src/features/konto/components/captcha-feld.tsx  · → AC-23
-- [ ] T8 [user]  Supabase-Dev-Projekt anlegen (falls noch nicht geschehen) und URL + Anon-Key in `.env.local` eintragen  · where: supabase.com → New project, Region eu-central-1 (Frankfurt); Project Settings → API → `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`  · → AC-21
-- [ ] T9 [user]  Turnstile-Widget anlegen  · where: Cloudflare Dashboard → Turnstile → Add widget; Hostnamen `localhost` und `test.wohnwerk-mb.de`, Modus „Managed“; Site Key → `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `.env.local`  · → AC-23
-- [ ] T10 [user]  Brevo-Konto und API-Schlüssel  · where: brevo.com → kostenloses Konto → SMTP & API → API Keys; Absender unter Senders verifizieren; `BREVO_API_KEY`, `MAIL_FROM_ADDRESS` in `.env.local`  · → AC-17, AC-24, AC-27
+- [x] T8 [user]  Supabase-Dev-Projekt anlegen (falls noch nicht geschehen) und URL + Anon-Key in `.env.local` eintragen  · where: supabase.com → New project, Region eu-central-1 (Frankfurt); Project Settings → API → `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`  · → AC-21
+- [x] T9 [user]  Turnstile-Widget anlegen  · where: Cloudflare Dashboard → Turnstile → Add widget; Hostnamen `localhost` und `test.wohnwerk-mb.de`, Modus „Managed“; Site Key → `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `.env.local`  · → AC-23
+- [x] T10 [user]  Brevo-Konto und API-Schlüssel  · where: brevo.com → kostenloses Konto → SMTP & API → API Keys; Absender unter Senders verifizieren; `BREVO_API_KEY`, `MAIL_FROM_ADDRESS` in `.env.local`  · → AC-17, AC-24, AC-27
 - [ ] T11 [user]  AVV abschließen  · where: Supabase → Organization Settings → Legal Documents; Brevo → Konto → DPA; Cloudflare → DPA; jeweils annehmen  · → kein AC (Datenschutz, `docs/privacy.md`)
 
 ## Ebene 2 — Server-Bausteine
@@ -32,13 +32,13 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 - [x] T13 [P]  App-eigene Mails über Brevo (Hinweis an alte Adresse, „bereits registriert“, Sicherheitshinweis), deutsche Texte + Test  · files: src/features/konto/mail.integration.ts, src/features/konto/mail.integration.test.ts  · → AC-17, AC-24, AC-27, AC-28
 - [x] T14 [P]  Proxy: Sitzung am Auth-Server prüfen, Inaktivität (30 Min.) über Aktivitäts-Cookie, Umleitung auf `/anmelden?weiter=…`; Sitzungs-Cookies ohne Ablaufdatum in allen Supabase-Clients + Test  · files: src/proxy.ts, src/proxy.test.ts, src/lib/supabase/proxy.ts, src/lib/supabase/server.ts, src/lib/supabase/client.ts  · → AC-7, AC-8, AC-10, EC-3, EC-4
 - [x] T15 [P]  Route für Links aus Mails (Bestätigung, Passwort, E-Mail-Wechsel); ungültig/abgelaufen → Weiterleitung auf `/link-ungueltig` + Test  · files: src/app/auth/bestaetigen/route.ts, src/app/auth/bestaetigen/route.test.ts  · → AC-4, AC-11, AC-17, EC-2
-- [ ] T16 [user]  CAPTCHA in Supabase einschalten  · where: Supabase (Dev) → Authentication → Attack Protection → Enable Captcha protection; Anbieter Turnstile, Secret Key aus Cloudflare  · → AC-23
-- [ ] T17 [user]  E-Mail-Bestätigung  · where: Authentication → Sign In / Providers → Email; „Confirm email“ an, „Secure email change“ aus  · → AC-1, AC-17
-- [ ] T18 [user]  Mindestlänge Passwort  · where: Authentication → Sign In / Providers → Email; 12 Zeichen  · → AC-3
-- [ ] T19 [user]  Site URL und Weiterleitungen  · where: Authentication → URL Configuration; Site URL `http://localhost:3000`, Redirects `http://localhost:3000/auth/bestaetigen` und `https://test.wohnwerk-mb.de/auth/bestaetigen`  · → AC-4, AC-11
-- [ ] T20 [user]  Deutsche Mailvorlagen einfügen (aus T6)  · where: Authentication → Emails → Templates (Confirm signup, Reset password, Change email address); Inhalt aus `supabase/templates/`  · → AC-28
-- [ ] T21 [user]  Freigabe-Hook aktivieren (nach Einspielen von T1)  · where: Authentication → Hooks → „Before User Created“ → Postgres-Funktion aus der Migration; eingeschaltet  · → AC-2
-- [ ] T22 [user]  Eigene Adresse freigeben  · where: Table Editor → `registration_allowlist` → Insert row; deine E-Mail-Adresse (+ ggf. Testadresse)  · → AC-1
+- [x] T16 [user]  CAPTCHA in Supabase einschalten  · where: Supabase (Dev) → Authentication → Attack Protection → Enable Captcha protection; Anbieter Turnstile, Secret Key aus Cloudflare  · → AC-23
+- [x] T17 [user]  E-Mail-Bestätigung  · where: Authentication → Sign In / Providers → Email; „Confirm email“ an, „Secure email change“ aus  · → AC-1, AC-17
+- [x] T18 [user]  Mindestlänge Passwort  · where: Authentication → Sign In / Providers → Email; 12 Zeichen  · → AC-3
+- [x] T19 [user]  Site URL und Weiterleitungen  · where: Authentication → URL Configuration; Site URL `http://localhost:3000`, Redirects `http://localhost:3000/auth/bestaetigen` und `https://test.wohnwerk-mb.de/auth/bestaetigen`  · → AC-4, AC-11
+- [x] T20 [user]  Deutsche Mailvorlagen einfügen (aus T6)  · where: Authentication → Emails → Templates (Confirm signup, Reset password, Change email address); Inhalt aus `supabase/templates/`  · → AC-28
+- [x] T21 [user]  Freigabe-Hook aktivieren (nach Einspielen von T1)  · where: Authentication → Hooks → „Before User Created“ → Postgres-Funktion aus der Migration; eingeschaltet  · → AC-2
+- [x] T22 [user]  Eigene Adresse freigeben  · where: Table Editor → `registration_allowlist` → Insert row; deine E-Mail-Adresse (+ ggf. Testadresse)  · → AC-1
 
 ## Ebene 3 — Server Actions
 
