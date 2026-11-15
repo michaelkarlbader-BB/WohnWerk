@@ -22,7 +22,7 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 - [x] T8 [user]  Supabase-Dev-Projekt anlegen (falls noch nicht geschehen) und URL + Anon-Key in `.env.local` eintragen  · where: supabase.com → New project, Region eu-central-1 (Frankfurt); Project Settings → API → `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`  · → AC-21
 - [x] T9 [user]  Turnstile-Widget anlegen  · where: Cloudflare Dashboard → Turnstile → Add widget; Hostnamen `localhost` und `test.wohnwerk-mb.de`, Modus „Managed“; Site Key → `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in `.env.local`  · → AC-23
 - [x] T10 [user]  Brevo-Konto und API-Schlüssel  · where: brevo.com → kostenloses Konto → SMTP & API → API Keys; Absender unter Senders verifizieren; `BREVO_API_KEY`, `MAIL_FROM_ADDRESS` in `.env.local`  · → AC-17, AC-24, AC-27
-- [ ] T11 [user]  AVV abschließen  · where: Supabase → Organization Settings → Legal Documents; Brevo → Konto → DPA; Cloudflare → DPA; jeweils annehmen  · → kein AC (Datenschutz, `docs/privacy.md`)
+- [x] T11 [user]  AVV abschließen  · where: Supabase → Organization Settings → Legal Documents; Brevo → Konto → DPA; Cloudflare → DPA; jeweils annehmen  · → kein AC (Datenschutz, `docs/privacy.md`)
 
 ## Ebene 2 — Server-Bausteine
 
