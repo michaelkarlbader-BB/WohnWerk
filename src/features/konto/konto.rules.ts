@@ -40,6 +40,43 @@ export function sperrMeldung(gesperrtBis: Date, jetzt: Date): string {
   return `Zu viele Fehlversuche. Bitte versuche es in ${minuten} ${einheit} erneut.`
 }
 
+// --- Wiederherstellung (AC-11, AC-16, BUG-1) ---
+
+/** How long after opening the recovery link a new password may be set. */
+export const WIEDERHERSTELLUNG_MAX_MS = 15 * 60 * 1000
+// Methods Supabase records in the token's `amr` claim for a session from an e-mail link.
+const WIEDERHERSTELLUNG_METHODEN: readonly string[] = ['recovery', 'otp']
+
+/**
+ * True only for a session whose token says it came from an e-mail link (recovery) at most
+ * 15 minutes ago. A password session — e.g. on an unattended device — never qualifies.
+ * Fails closed on anything unexpected.
+ */
+export function istFrischeWiederherstellung(amr: unknown, jetztMs: number): boolean {
+  if (!Array.isArray(amr)) return false
+  return amr.some((eintrag: unknown) => {
+    if (typeof eintrag !== 'object' || eintrag === null) return false
+    const { method, timestamp } = eintrag as { method?: unknown; timestamp?: unknown }
+    if (typeof method !== 'string' || !WIEDERHERSTELLUNG_METHODEN.includes(method)) return false
+    if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return false
+    const alterMs = jetztMs - timestamp * 1000
+    return alterMs >= -60_000 && alterMs <= WIEDERHERSTELLUNG_MAX_MS
+  })
+}
+
+// --- Kontoexistenz (AC-11, AC-24, EC-1, BUG-2) ---
+
+// Errors Supabase only raises when the address belongs to an account (e.g. the 60-second
+// resend limit applies to existing accounts only). Showing them would reveal the account.
+const KONTOABHAENGIGE_CODES: readonly string[] = ['over_email_send_rate_limit']
+
+/** True when showing this error would tell the sender that the address has an account. */
+export function verraetKonto(
+  fehler: { code?: string | null; status?: number | null; message?: string | null } | null | undefined,
+): boolean {
+  return typeof fehler?.code === 'string' && KONTOABHAENGIGE_CODES.includes(fehler.code)
+}
+
 // --- Inaktivität (AC-7) ---
 
 /** Cookie holding the last-activity time as epoch milliseconds (decimal string). */

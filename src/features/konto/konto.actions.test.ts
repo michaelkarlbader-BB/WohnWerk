@@ -34,7 +34,13 @@ const h = vi.hoisted(() => {
       },
     },
   }
-  const einmalClient = { auth: { signInWithPassword: vi.fn(), signOut: vi.fn() } }
+  const einmalClient = {
+    auth: {
+      signInWithPassword: vi.fn(),
+      signOut: vi.fn(),
+      mfa: { listFactors: vi.fn(), challengeAndVerify: vi.fn() },
+    },
+  }
   return {
     zustand,
     cookieClient,
@@ -45,15 +51,20 @@ const h = vi.hoisted(() => {
     revalidatePath: vi.fn(),
     anzeigenameAendern: vi.fn(),
     eigenesKontoLoeschen: vi.fn(),
-    fehlversuchZaehlen: vi.fn(),
-    sperreLesen: vi.fn(),
+    alsVersuch: vi.fn(),
+    /** [email, art] of every attempt that stayed counted (wrong credentials). */
+    gezaehlt: [] as [string, string][],
+    referer: null as string | null,
     sendeHinweisAlteAdresse: vi.fn(),
     sendeSicherheitshinweis: vi.fn(),
   }
 })
 
 vi.mock('server-only', () => ({}))
-vi.mock('next/headers', () => ({ cookies: async () => ({ delete: h.cookieDelete }) }))
+vi.mock('next/headers', () => ({
+  cookies: async () => ({ delete: h.cookieDelete }),
+  headers: async () => ({ get: (name: string) => (name === 'referer' ? h.referer : null) }),
+}))
 vi.mock('next/navigation', () => ({ redirect: h.redirect }))
 vi.mock('next/cache', () => ({ revalidatePath: h.revalidatePath }))
 vi.mock('@/lib/supabase/server', () => ({ createClient: async () => h.cookieClient }))
@@ -61,8 +72,7 @@ vi.mock('@supabase/supabase-js', () => ({ createClient: h.createEinmalClient }))
 vi.mock('./konto.data', () => ({
   anzeigenameAendern: h.anzeigenameAendern,
   eigenesKontoLoeschen: h.eigenesKontoLoeschen,
-  fehlversuchZaehlen: h.fehlversuchZaehlen,
-  sperreLesen: h.sperreLesen,
+  alsVersuch: h.alsVersuch,
 }))
 vi.mock('./mail.integration', () => ({
   sendeHinweisAlteAdresse: h.sendeHinweisAlteAdresse,
@@ -109,11 +119,7 @@ const LOESCH_FORMULAR = {
   captchaToken: 'captcha-ok',
 }
 
-const NICHT_ANGEMELDET = {
-  ok: false,
-  code: 'nicht_angemeldet',
-  meldung: 'Bitte melde dich erneut an.',
-}
+const ZUR_ANMELDUNG = 'REDIRECT:/anmelden?weiter=%2Fkonto'
 const CODE_FALSCH = {
   ok: false,
   code: 'code_falsch',
@@ -136,18 +142,21 @@ beforeEach(() => {
     data: { currentLevel: 'aal1', nextLevel: 'aal1' },
     error: null,
   })
-  mfa.listFactors.mockImplementation(async () => ({
+  const faktorenListe = async () => ({
     data: {
       all: [...h.zustand.faktoren],
       totp: h.zustand.faktoren.filter((f) => f.status === 'verified'),
     },
     error: null,
-  }))
-  mfa.challengeAndVerify.mockImplementation(async ({ code }: { code: string }) =>
+  })
+  const codePruefung = async ({ code }: { code: string }) =>
     code === RICHTIGER_CODE
       ? { data: {}, error: null }
-      : { data: null, error: { code: 'mfa_verification_failed', status: 422, message: 'raw supabase text' } },
-  )
+      : { data: null, error: { code: 'mfa_verification_failed', status: 422, message: 'raw supabase text' } }
+  mfa.listFactors.mockImplementation(faktorenListe)
+  mfa.challengeAndVerify.mockImplementation(codePruefung)
+  h.einmalClient.auth.mfa.listFactors.mockImplementation(faktorenListe)
+  h.einmalClient.auth.mfa.challengeAndVerify.mockImplementation(codePruefung)
   mfa.enroll.mockResolvedValue({
     data: { id: NEU, type: 'totp', totp: { qr_code: 'data:image/svg+xml;utf-8,<svg/>', secret: 'GEHEIM', uri: 'otpauth://x' } },
     error: null,
@@ -169,13 +178,22 @@ beforeEach(() => {
   h.redirect.mockImplementation((ziel: string) => {
     throw new Error(`REDIRECT:${ziel}`)
   })
-  h.sperreLesen.mockResolvedValue({ gesperrt: false, gesperrtBis: null })
+  // Like the real one: runs the check and keeps the attempt only for wrong credentials.
+  h.gezaehlt.length = 0
+  h.alsVersuch.mockImplementation(
+    async (email: string, art: string, pruefen: () => Promise<{ falsch: boolean; wert: unknown }>) => {
+      const ergebnis = await pruefen()
+      if (ergebnis.falsch) h.gezaehlt.push([email, art])
+      return { gesperrt: false, wert: ergebnis.wert }
+    },
+  )
+  h.referer = 'https://wohnwerk.test/konto'
   h.sendeHinweisAlteAdresse.mockResolvedValue(true)
   h.sendeSicherheitshinweis.mockResolvedValue(true)
 })
 
 const gesperrtIn10Minuten = () =>
-  h.sperreLesen.mockResolvedValue({
+  h.alsVersuch.mockResolvedValue({
     gesperrt: true,
     gesperrtBis: new Date(Date.now() + 10 * 60_000 - 5_000),
   })
@@ -198,45 +216,67 @@ function erwarteKeineWirkung() {
   expect(auth.updateUser).not.toHaveBeenCalled()
   expect(auth.signOut).not.toHaveBeenCalled()
   expect(h.createEinmalClient).not.toHaveBeenCalled()
-  expect(h.sperreLesen).not.toHaveBeenCalled()
-  expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+  expect(h.alsVersuch).not.toHaveBeenCalled()
+  expect(h.gezaehlt).toEqual([])
   expect(h.anzeigenameAendern).not.toHaveBeenCalled()
   expect(h.eigenesKontoLoeschen).not.toHaveBeenCalled()
   expect(h.sendeHinweisAlteAdresse).not.toHaveBeenCalled()
   expect(h.sendeSicherheitshinweis).not.toHaveBeenCalled()
   expect(h.revalidatePath).not.toHaveBeenCalled()
   expect(h.cookieDelete).not.toHaveBeenCalled()
-  expect(h.redirect).not.toHaveBeenCalled()
+  // The only redirect allowed: to the sign-in window.
+  for (const [ziel] of h.redirect.mock.calls) expect(ziel).toBe('/anmelden?weiter=%2Fkonto')
 }
 
 describe('Sitzungsprüfung (SEC-03)', () => {
-  it.each(ALLE_AKTIONEN)('%s ohne Nutzer → nicht_angemeldet, kein weiterer Aufruf', async (_n, aktion, felder) => {
+  it.each(ALLE_AKTIONEN)('%s ohne Nutzer → Anmeldefenster, kein weiterer Aufruf', async (_n, aktion, felder) => {
     auth.getUser.mockResolvedValue({ data: { user: null }, error: null })
     h.zustand.faktoren = [faktor(F1, 'unverified')]
 
-    expect(await aktion(VORHER, fd(felder))).toEqual(NICHT_ANGEMELDET)
+    await expect(aktion(VORHER, fd(felder))).rejects.toThrow(ZUR_ANMELDUNG)
     expect(mfa.getAuthenticatorAssuranceLevel).not.toHaveBeenCalled()
     erwarteKeineWirkung()
   })
 
-  it.each(ALLE_AKTIONEN)('%s mit offener zweiter Stufe → nicht_angemeldet', async (_n, aktion, felder) => {
+  it.each(ALLE_AKTIONEN)('%s mit offener zweiter Stufe → Anmeldefenster', async (_n, aktion, felder) => {
     mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
       data: { currentLevel: 'aal1', nextLevel: 'aal2' },
       error: null,
     })
     h.zustand.faktoren = [faktor(F1, 'unverified')]
 
-    expect(await aktion(VORHER, fd(felder))).toEqual(NICHT_ANGEMELDET)
+    await expect(aktion(VORHER, fd(felder))).rejects.toThrow(ZUR_ANMELDUNG)
     erwarteKeineWirkung()
   })
 
-  it('Fehler bei getUser oder bei der Stufenprüfung → nicht_angemeldet', async () => {
+  it('Fehler bei getUser oder bei der Stufenprüfung → Anmeldefenster', async () => {
     auth.getUser.mockResolvedValueOnce({ data: { user: null }, error: { code: 'bad_jwt' } })
-    expect(await anzeigenameSpeichern(VORHER, fd({ anzeigename: 'A' }))).toEqual(NICHT_ANGEMELDET)
+    await expect(anzeigenameSpeichern(VORHER, fd({ anzeigename: 'A' }))).rejects.toThrow(ZUR_ANMELDUNG)
 
     mfa.getAuthenticatorAssuranceLevel.mockResolvedValueOnce({ data: null, error: { status: 500 } })
-    expect(await anzeigenameSpeichern(VORHER, fd({ anzeigename: 'A' }))).toEqual(NICHT_ANGEMELDET)
+    await expect(anzeigenameSpeichern(VORHER, fd({ anzeigename: 'A' }))).rejects.toThrow(ZUR_ANMELDUNG)
     expect(h.anzeigenameAendern).not.toHaveBeenCalled()
+  })
+
+  // EC-3, BUG-7: back to the page the form was sent from - only an internal path.
+  it.each([
+    ['https://wohnwerk.test/konto?tab=sicherheit', '/anmelden?weiter=%2Fkonto%3Ftab%3Dsicherheit'],
+    ['https://wohnwerk.test/anmelden', '/anmelden'],
+    ['kein URL', '/anmelden'],
+    [null, '/anmelden'],
+  ])('Rücksprung bei Referer %s', async (referer, ziel) => {
+    h.referer = referer
+    auth.getUser.mockResolvedValue({ data: { user: null }, error: null })
+
+    await expect(anzeigenameSpeichern(VORHER, fd({ anzeigename: 'A' }))).rejects.toThrow('REDIRECT:')
+    expect(h.redirect).toHaveBeenCalledExactlyOnceWith(ziel)
+  })
+
+  it('Sitzung endet während der Aktion → Anmeldefenster statt Meldung', async () => {
+    auth.updateUser.mockResolvedValue({ data: null, error: { code: 'session_not_found', status: 403 } })
+
+    await expect(emailAendern(VORHER, fd({ email: 'neu@example.com' }))).rejects.toThrow(ZUR_ANMELDUNG)
+    expect(h.sendeHinweisAlteAdresse).not.toHaveBeenCalled()
   })
 
   it('Sitzung mit erfüllter zweiter Stufe darf ändern', async () => {
@@ -353,7 +393,7 @@ describe('passwortAendern', () => {
     const ergebnis = await passwortAendern(VORHER, fd(PASSWORT_FORMULAR))
 
     expect(ergebnis).toEqual({ ok: true, meldung: 'Passwort geändert.' })
-    expect(h.sperreLesen).toHaveBeenCalledExactlyOnceWith(EMAIL)
+    expect(h.alsVersuch).toHaveBeenCalledExactlyOnceWith(EMAIL, 'passwort', expect.any(Function))
     expect(h.createEinmalClient).toHaveBeenCalledExactlyOnceWith(
       'https://projekt.supabase.test',
       'anon-key',
@@ -367,9 +407,12 @@ describe('passwortAendern', () => {
     expect(h.einmalClient.auth.signOut).toHaveBeenCalledExactlyOnceWith({ scope: 'local' })
     expect(auth.signInWithPassword).not.toHaveBeenCalled()
     expect(auth.signOut).not.toHaveBeenCalled()
-    expect(auth.updateUser).toHaveBeenCalledExactlyOnceWith({ password: NEUES_PASSWORT })
+    expect(auth.updateUser).toHaveBeenCalledExactlyOnceWith({
+      password: NEUES_PASSWORT,
+      current_password: ALTES_PASSWORT,
+    })
     expect(h.sendeSicherheitshinweis).toHaveBeenCalledExactlyOnceWith(EMAIL, 'passwort_geaendert')
-    expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+    expect(h.gezaehlt).toEqual([])
   })
 
   it('falsches aktuelles Passwort → einmal gezählt, kein updateUser, keine Mail', async () => {
@@ -383,7 +426,7 @@ describe('passwortAendern', () => {
       code: 'anmeldung_falsch',
       meldung: 'Das aktuelle Passwort ist falsch.',
     })
-    expect(h.fehlversuchZaehlen).toHaveBeenCalledExactlyOnceWith(EMAIL, 'passwort')
+    expect(h.gezaehlt).toEqual([[EMAIL, 'passwort']])
     expect(auth.updateUser).not.toHaveBeenCalled()
     expect(h.sendeSicherheitshinweis).not.toHaveBeenCalled()
     expect(auth.signInWithPassword).not.toHaveBeenCalled()
@@ -397,7 +440,6 @@ describe('passwortAendern', () => {
       code: 'gesperrt',
       meldung: 'Zu viele Fehlversuche. Bitte versuche es in 10 Minuten erneut.',
     })
-    expect(h.createEinmalClient).not.toHaveBeenCalled()
     expect(h.einmalClient.auth.signInWithPassword).not.toHaveBeenCalled()
     expect(auth.updateUser).not.toHaveBeenCalled()
   })
@@ -426,7 +468,7 @@ describe('passwortAendern', () => {
 
     expect(ergebnis.code).toBe('captcha')
     expect(ergebnis.meldung).toBe('Die Sicherheitsprüfung ist fehlgeschlagen. Bitte versuche es erneut.')
-    expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+    expect(h.gezaehlt).toEqual([])
     expect(auth.updateUser).not.toHaveBeenCalled()
   })
 
@@ -441,7 +483,7 @@ describe('passwortAendern', () => {
       code: 'eingabe',
       feldFehler: { passwort: 'Das Passwort muss mindestens 12 Zeichen haben.' },
     })
-    expect(h.sperreLesen).not.toHaveBeenCalled()
+    expect(h.alsVersuch).not.toHaveBeenCalled()
     expect(h.createEinmalClient).not.toHaveBeenCalled()
   })
 
@@ -491,7 +533,7 @@ describe('zweiFaktorStarten', () => {
     })
     expect(mfa.enroll).toHaveBeenCalledExactlyOnceWith({ factorType: 'totp', friendlyName: 'Authenticator 1' })
     expect(mfa.challengeAndVerify).not.toHaveBeenCalled()
-    expect(h.sperreLesen).not.toHaveBeenCalled()
+    expect(h.alsVersuch).not.toHaveBeenCalled()
   })
 
   it('liegengebliebener unbestätigter Faktor wird vor dem Anlegen entfernt', async () => {
@@ -513,14 +555,14 @@ describe('zweiFaktorStarten', () => {
     expect(mfa.challengeAndVerify).toHaveBeenCalledExactlyOnceWith({ factorId: F1, code: RICHTIGER_CODE })
     expect(mfa.enroll).toHaveBeenCalledExactlyOnceWith({ factorType: 'totp', friendlyName: 'Authenticator 2' })
     expect(mfa.unenroll).not.toHaveBeenCalled()
-    expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+    expect(h.gezaehlt).toEqual([])
   })
 
   it('zweiter Authenticator mit falschem Code → als totp gezählt, kein enroll', async () => {
     h.zustand.faktoren = [faktor(F1)]
 
     expect(await zweiFaktorStarten(VORHER, fd({ code: FALSCHER_CODE }))).toEqual(CODE_FALSCH)
-    expect(h.fehlversuchZaehlen).toHaveBeenCalledExactlyOnceWith(EMAIL, 'totp')
+    expect(h.gezaehlt).toEqual([[EMAIL, 'totp']])
     expect(mfa.enroll).not.toHaveBeenCalled()
   })
 
@@ -629,14 +671,14 @@ describe('zweiFaktorAusschalten', () => {
     expect(mfa.unenroll.mock.calls.map(([arg]) => arg.factorId).sort()).toEqual([F1, F2, F3])
     expect(h.sendeSicherheitshinweis).toHaveBeenCalledExactlyOnceWith(EMAIL, 'zwei_faktor_aus')
     expect(h.revalidatePath).toHaveBeenCalledExactlyOnceWith('/', 'layout')
-    expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+    expect(h.gezaehlt).toEqual([])
   })
 
   it('falscher Code → einmal gezählt, kein unenroll, keine Mail', async () => {
     h.zustand.faktoren = [faktor(F1), faktor(F2)]
 
     expect(await zweiFaktorAusschalten(VORHER, fd({ code: FALSCHER_CODE }))).toEqual(CODE_FALSCH)
-    expect(h.fehlversuchZaehlen).toHaveBeenCalledExactlyOnceWith(EMAIL, 'totp')
+    expect(h.gezaehlt).toEqual([[EMAIL, 'totp']])
     expect(mfa.unenroll).not.toHaveBeenCalled()
     expect(h.sendeSicherheitshinweis).not.toHaveBeenCalled()
   })
@@ -655,7 +697,7 @@ describe('zweiFaktorAusschalten', () => {
     mfa.challengeAndVerify.mockResolvedValue({ data: null, error: { status: 503, message: 'raw' } })
 
     expect((await zweiFaktorAusschalten(VORHER, fd({ code: RICHTIGER_CODE }))).code).toBe('dienst_nicht_erreichbar')
-    expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+    expect(h.gezaehlt).toEqual([])
     expect(mfa.unenroll).not.toHaveBeenCalled()
   })
 
@@ -663,7 +705,8 @@ describe('zweiFaktorAusschalten', () => {
     h.zustand.faktoren = [faktor(F1)]
     mfa.unenroll.mockResolvedValue({ data: null, error: { code: 'insufficient_aal', status: 400, message: 'raw' } })
 
-    expect(await zweiFaktorAusschalten(VORHER, fd({ code: RICHTIGER_CODE }))).toEqual(NICHT_ANGEMELDET)
+    // insufficient_aal: the session no longer counts as signed in (EC-3).
+    await expect(zweiFaktorAusschalten(VORHER, fd({ code: RICHTIGER_CODE }))).rejects.toThrow(ZUR_ANMELDUNG)
     expect(h.sendeSicherheitshinweis).not.toHaveBeenCalled()
   })
 
@@ -690,7 +733,8 @@ describe('kontoLoeschen', () => {
       password: ALTES_PASSWORT,
       options: { captchaToken: 'captcha-ok' },
     })
-    expect(h.eigenesKontoLoeschen).toHaveBeenCalledTimes(1)
+    expect(h.eigenesKontoLoeschen).toHaveBeenCalledExactlyOnceWith(h.einmalClient)
+    expect(h.einmalClient.auth.signOut).toHaveBeenCalledExactlyOnceWith({ scope: 'local' })
     expect(auth.signOut).toHaveBeenCalledExactlyOnceWith({ scope: 'local' })
     expect(h.cookieDelete).toHaveBeenCalledExactlyOnceWith('ww-aktiv')
     expect(h.redirect).toHaveBeenCalledExactlyOnceWith('/anmelden')
@@ -703,8 +747,13 @@ describe('kontoLoeschen', () => {
     await expect(
       kontoLoeschen(VORHER, fd({ ...LOESCH_FORMULAR, code: RICHTIGER_CODE })),
     ).rejects.toThrow('REDIRECT:/anmelden')
-    expect(mfa.challengeAndVerify).toHaveBeenCalledExactlyOnceWith({ factorId: F1, code: RICHTIGER_CODE })
-    expect(h.eigenesKontoLoeschen).toHaveBeenCalledTimes(1)
+    // The fresh session gets the code, so its token carries both methods (BUG-3).
+    expect(h.einmalClient.auth.mfa.challengeAndVerify).toHaveBeenCalledExactlyOnceWith({
+      factorId: F1,
+      code: RICHTIGER_CODE,
+    })
+    expect(mfa.challengeAndVerify).not.toHaveBeenCalled()
+    expect(h.eigenesKontoLoeschen).toHaveBeenCalledExactlyOnceWith(h.einmalClient)
   })
 
   it('ein Fehler beim Abmelden hält die Weiterleitung nicht auf', async () => {
@@ -734,7 +783,7 @@ describe('kontoLoeschen', () => {
       code: 'anmeldung_falsch',
       meldung: 'Das aktuelle Passwort ist falsch.',
     })
-    expect(h.fehlversuchZaehlen).toHaveBeenCalledExactlyOnceWith(EMAIL, 'passwort')
+    expect(h.gezaehlt).toEqual([[EMAIL, 'passwort']])
     erwarteNichtsGeloescht()
   })
 
@@ -754,7 +803,8 @@ describe('kontoLoeschen', () => {
       code: 'eingabe',
       feldFehler: { code: 'Der Code besteht aus 6 Ziffern.' },
     })
-    expect(mfa.challengeAndVerify).not.toHaveBeenCalled()
+    expect(h.einmalClient.auth.mfa.challengeAndVerify).not.toHaveBeenCalled()
+    expect(h.einmalClient.auth.signOut).toHaveBeenCalledExactlyOnceWith({ scope: 'local' })
     erwarteNichtsGeloescht()
   })
 
@@ -762,7 +812,7 @@ describe('kontoLoeschen', () => {
     h.zustand.faktoren = [faktor(F1)]
 
     expect(await kontoLoeschen(VORHER, fd({ ...LOESCH_FORMULAR, code: FALSCHER_CODE }))).toEqual(CODE_FALSCH)
-    expect(h.fehlversuchZaehlen).toHaveBeenCalledExactlyOnceWith(EMAIL, 'totp')
+    expect(h.gezaehlt).toEqual([[EMAIL, 'totp']])
     erwarteNichtsGeloescht()
   })
 
@@ -777,14 +827,15 @@ describe('kontoLoeschen', () => {
     expect(auth.signOut).not.toHaveBeenCalled()
     expect(h.cookieDelete).not.toHaveBeenCalled()
     expect(h.redirect).not.toHaveBeenCalled()
+    // The fresh session does not outlive the failed attempt.
+    expect(h.einmalClient.auth.signOut).toHaveBeenCalledExactlyOnceWith({ scope: 'local' })
   })
 
   it('Doppelklick (EC-6): der zweite Aufruf findet keinen Nutzer', async () => {
     await expect(kontoLoeschen(VORHER, fd(LOESCH_FORMULAR))).rejects.toThrow('REDIRECT:/anmelden')
     auth.getUser.mockResolvedValue({ data: { user: null }, error: { code: 'session_not_found' } })
 
-    expect(await kontoLoeschen(VORHER, fd(LOESCH_FORMULAR))).toEqual(NICHT_ANGEMELDET)
+    await expect(kontoLoeschen(VORHER, fd(LOESCH_FORMULAR))).rejects.toThrow(ZUR_ANMELDUNG)
     expect(h.eigenesKontoLoeschen).toHaveBeenCalledTimes(1)
-    expect(h.redirect).toHaveBeenCalledTimes(1)
   })
 })

@@ -1,12 +1,13 @@
 import { z } from 'zod'
 
 export const PASSWORT_MIN = 12
+/** Supabase (bcrypt) counts bytes, not characters: an umlaut takes two, an emoji four. */
 export const PASSWORT_MAX = 72
 
 const EMAIL_FEHLER = 'Bitte gib eine gültige E-Mail-Adresse ein.'
 const PASSWORT_FEHLT = 'Bitte gib dein Passwort ein.'
 const PASSWORT_ZU_KURZ = `Das Passwort muss mindestens ${PASSWORT_MIN} Zeichen haben.`
-const PASSWORT_ZU_LANG = `Das Passwort darf höchstens ${PASSWORT_MAX} Zeichen haben.`
+const PASSWORT_ZU_LANG = `Das Passwort ist zu lang: höchstens ${PASSWORT_MAX} Zeichen, Umlaute und Sonderzeichen zählen dabei mehrfach.`
 const ANZEIGENAME_ZU_LANG = 'Der Anzeigename darf höchstens 60 Zeichen haben.'
 const CODE_FEHLER = 'Der Code besteht aus 6 Ziffern.'
 const BESTAETIGUNG_FEHLER = 'Bitte gib LÖSCHEN ein.'
@@ -19,17 +20,21 @@ export const emailSchema = z
   .max(254, { error: EMAIL_FEHLER })
   .pipe(z.email({ error: EMAIL_FEHLER }))
 
+const utf8 = new TextEncoder()
+/** BUG-12: the limit applies to the UTF-8 bytes, as Supabase checks it. */
+const passt72Bytes = (wert: string) => utf8.encode(wert).length <= PASSWORT_MAX
+
 /** Neues Passwort – bewusst ohne trim, Leerzeichen gehören zum Passwort. */
 export const passwortSchema = z
   .string({ error: PASSWORT_ZU_KURZ })
   .min(PASSWORT_MIN, { error: PASSWORT_ZU_KURZ })
-  .max(PASSWORT_MAX, { error: PASSWORT_ZU_LANG })
+  .refine(passt72Bytes, { error: PASSWORT_ZU_LANG })
 
 /** Vorhandenes Passwort (Anmeldung, Bestätigung) – keine Mindestlänge, die Prüfung macht die Anmeldung. */
 export const vorhandenesPasswortSchema = z
   .string({ error: PASSWORT_FEHLT })
   .min(1, { error: PASSWORT_FEHLT })
-  .max(PASSWORT_MAX, { error: PASSWORT_FEHLT })
+  .refine(passt72Bytes, { error: PASSWORT_FEHLT })
 
 export const anzeigenameSchema = z
   .string({ error: ANZEIGENAME_ZU_LANG })

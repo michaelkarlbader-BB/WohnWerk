@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { abmelden } from '@/features/konto/auth.actions'
+import { AbmeldenKnopf } from '@/features/konto/components/abmelden-knopf'
 import { Sitzungswaechter } from '@/features/konto/components/sitzungswaechter'
 import { profilLesen } from '@/features/konto/konto.data'
 import { createClient } from '@/lib/supabase/server'
@@ -51,11 +50,7 @@ export default async function AngemeldetLayout({ children }: { children: ReactNo
           <Link href="/wohnungen" className={LINK}>
             Wohnungen
           </Link>
-          <form action={abmelden}>
-            <Button type="submit" variant="outline" size="sm">
-              Abmelden
-            </Button>
-          </form>
+          <AbmeldenKnopf />
         </div>
       </footer>
     </div>

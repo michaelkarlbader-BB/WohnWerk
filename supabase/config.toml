@@ -232,7 +232,8 @@ enable_confirmations = true
 secure_password_change = false
 # If enabled, users will need to provide their current password to change their password, unless
 # they signed in with a one-time password, magic link, or recovery link.
-# require_current_password = true
+# PROJ-1 BUG-3: on, so a taken-over session cannot change the password directly at the Auth API.
+require_current_password = true
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
 max_frequency = "1m0s"
 # Number of characters used in the email OTP.

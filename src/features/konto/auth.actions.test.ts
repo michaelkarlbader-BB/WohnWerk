@@ -43,9 +43,12 @@ const h = vi.hoisted(() => {
     cookieDelete,
     cookieStore,
     auth,
-    sperreLesen: vi.fn(),
-    fehlversuchZaehlen: vi.fn(),
+    alsVersuch: vi.fn(),
+    /** [email, art] of every attempt that stayed counted (wrong credentials). */
+    gezaehlt: [] as [string, string][],
+    wiederherstellungsEmail: vi.fn(),
     fehlversucheLoeschen: vi.fn(),
+    nachAntwort: [] as (() => unknown)[],
     sendeBereitsRegistriert: vi.fn(),
     sendeSicherheitshinweis: vi.fn(),
   }
@@ -58,10 +61,12 @@ vi.mock('next/navigation', () => ({
     throw Object.assign(new Error('NEXT_REDIRECT'), { digest: `NEXT_REDIRECT;replace;${ziel};307;` })
   },
 }))
+// `after` runs its callback once the response is out; the tests run it on demand.
+vi.mock('next/server', () => ({ after: (rueckruf: () => unknown) => h.nachAntwort.push(rueckruf) }))
 vi.mock('@/lib/supabase/server', () => ({ createClient: async () => ({ auth: h.auth }) }))
 vi.mock('./konto.data', () => ({
-  sperreLesen: h.sperreLesen,
-  fehlversuchZaehlen: h.fehlversuchZaehlen,
+  alsVersuch: h.alsVersuch,
+  wiederherstellungsEmail: h.wiederherstellungsEmail,
   fehlversucheLoeschen: h.fehlversucheLoeschen,
 }))
 vi.mock('./mail.integration', () => ({
@@ -139,8 +144,19 @@ beforeEach(() => {
   h.auth.mfa.challengeAndVerify.mockReset().mockResolvedValue({ data: {}, error: null })
   h.auth.mfa.getAuthenticatorAssuranceLevel.mockReset().mockResolvedValue(aal('aal1', 'aal1'))
 
-  h.sperreLesen.mockReset().mockResolvedValue({ gesperrt: false, gesperrtBis: null })
-  h.fehlversuchZaehlen.mockReset().mockResolvedValue(undefined)
+  // Like the real one: runs the check and keeps the attempt only for wrong credentials.
+  h.gezaehlt.length = 0
+  h.alsVersuch
+    .mockReset()
+    .mockImplementation(
+      async (email: string, art: string, pruefen: () => Promise<{ falsch: boolean; wert: unknown }>) => {
+        const ergebnis = await pruefen()
+        if (ergebnis.falsch) h.gezaehlt.push([email, art])
+        return { gesperrt: false, wert: ergebnis.wert }
+      },
+    )
+  h.wiederherstellungsEmail.mockReset().mockResolvedValue('anna@example.com')
+  h.nachAntwort.length = 0
   h.fehlversucheLoeschen.mockReset().mockResolvedValue(undefined)
   h.sendeBereitsRegistriert.mockReset().mockResolvedValue(true)
   h.sendeSicherheitshinweis.mockReset().mockResolvedValue(true)
@@ -152,7 +168,7 @@ afterEach(() => {
 })
 
 function sperren(minuten: number) {
-  h.sperreLesen.mockResolvedValue({
+  h.alsVersuch.mockResolvedValue({
     gesperrt: true,
     gesperrtBis: new Date(JETZT.getTime() + minuten * 60_000),
   })
@@ -165,7 +181,7 @@ describe('anmelden', () => {
     const ziel = await umleitung(anmelden(VORHER, formular(felder)))
 
     expect(ziel).toBe('/darlehen?x=1')
-    expect(h.sperreLesen).toHaveBeenCalledWith('anna@example.com')
+    expect(h.alsVersuch).toHaveBeenCalledWith('anna@example.com', 'passwort', expect.any(Function))
     expect(h.auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'anna@example.com',
       password: PASSWORT,
@@ -218,7 +234,7 @@ describe('anmelden', () => {
   })
 
   it('fails closed when the lock state is unknown', async () => {
-    h.sperreLesen.mockRejectedValue(new Error('sperreLesen failed'))
+    h.alsVersuch.mockRejectedValue(new Error('versuchBeginnen failed'))
     const ergebnis = await anmelden(VORHER, formular(felder))
 
     expect(ergebnis).toEqual({ ok: false, code: 'dienst_nicht_erreichbar', meldung: NICHT_ERREICHBAR })
@@ -239,8 +255,7 @@ describe('anmelden', () => {
         code: 'anmeldung_falsch',
         meldung: 'E-Mail oder Passwort falsch.',
       })
-      expect(h.fehlversuchZaehlen).toHaveBeenCalledTimes(1)
-      expect(h.fehlversuchZaehlen).toHaveBeenCalledWith('anna@example.com', 'passwort')
+      expect(h.gezaehlt).toEqual([['anna@example.com', 'passwort']])
       expect(h.cookieSet).toEqual([])
     },
   )
@@ -257,14 +272,14 @@ describe('anmelden', () => {
       code: 'nicht_bestaetigt',
       meldung: 'Bitte bestätige zuerst deine E-Mail-Adresse',
     })
-    expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+    expect(h.gezaehlt).toEqual([])
   })
 
   it('does not call Supabase without a captcha token (AC-23)', async () => {
     const ergebnis = await anmelden(VORHER, formular({ ...felder, captchaToken: '' }))
 
     expect(ergebnis).toEqual({ ok: false, code: 'captcha', meldung: CAPTCHA_FEHLER })
-    expect(h.sperreLesen).not.toHaveBeenCalled()
+    expect(h.alsVersuch).not.toHaveBeenCalled()
     expect(h.auth.signInWithPassword).not.toHaveBeenCalled()
   })
 
@@ -276,7 +291,7 @@ describe('anmelden', () => {
     const ergebnis = await anmelden(VORHER, formular(felder))
 
     expect(ergebnis).toEqual({ ok: false, code: 'captcha', meldung: CAPTCHA_FEHLER })
-    expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+    expect(h.gezaehlt).toEqual([])
   })
 
   it('never passes a raw Supabase message on', async () => {
@@ -291,7 +306,7 @@ describe('anmelden', () => {
       code: 'unerwartet',
       meldung: 'Das hat nicht geklappt. Bitte versuche es erneut.',
     })
-    expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+    expect(h.gezaehlt).toEqual([])
   })
 
   it('reports an unreachable service when the sign-in throws', async () => {
@@ -313,7 +328,7 @@ describe('anmelden', () => {
         passwort: 'Bitte gib dein Passwort ein.',
       },
     })
-    expect(h.sperreLesen).not.toHaveBeenCalled()
+    expect(h.alsVersuch).not.toHaveBeenCalled()
     expect(h.auth.signInWithPassword).not.toHaveBeenCalled()
   })
 
@@ -343,7 +358,7 @@ describe('zweiFaktorPruefen', () => {
     const ziel = await umleitung(zweiFaktorPruefen(VORHER, formular(felder)))
 
     expect(ziel).toBe('/mieter')
-    expect(h.sperreLesen).toHaveBeenCalledWith('anna@example.com')
+    expect(h.alsVersuch).toHaveBeenCalledWith('anna@example.com', 'totp', expect.any(Function))
     expect(h.auth.mfa.challengeAndVerify).toHaveBeenCalledWith({ factorId: 'f1', code: '123456' })
     expect(h.cookieSet).toHaveLength(1)
     expect(h.cookieSet[0]).toMatchObject({ name: COOKIE, value: String(JETZT.getTime()) })
@@ -368,7 +383,7 @@ describe('zweiFaktorPruefen', () => {
 
     expect(await umleitung(zweiFaktorPruefen(VORHER, formular(felder)))).toBe('/mieter')
     expect(h.auth.mfa.challengeAndVerify.mock.calls.map(([p]) => p.factorId)).toEqual(['f1', 'f2'])
-    expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+    expect(h.gezaehlt).toEqual([])
   })
 
   it('counts exactly one totp attempt when no factor accepts the code', async () => {
@@ -388,8 +403,7 @@ describe('zweiFaktorPruefen', () => {
       meldung: 'Der Code ist falsch oder abgelaufen.',
     })
     expect(h.auth.mfa.challengeAndVerify).toHaveBeenCalledTimes(2)
-    expect(h.fehlversuchZaehlen).toHaveBeenCalledTimes(1)
-    expect(h.fehlversuchZaehlen).toHaveBeenCalledWith('anna@example.com', 'totp')
+    expect(h.gezaehlt).toEqual([['anna@example.com', 'totp']])
     expect(h.cookieSet).toEqual([])
     expect(h.fehlversucheLoeschen).not.toHaveBeenCalled()
   })
@@ -412,7 +426,7 @@ describe('zweiFaktorPruefen', () => {
     const ergebnis = await zweiFaktorPruefen(VORHER, formular(felder))
 
     expect(ergebnis).toEqual({ ok: false, code: 'dienst_nicht_erreichbar', meldung: NICHT_ERREICHBAR })
-    expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+    expect(h.gezaehlt).toEqual([])
   })
 
   it('needs a session', async () => {
@@ -432,7 +446,7 @@ describe('zweiFaktorPruefen', () => {
       feldFehler: { code: 'Der Code besteht aus 6 Ziffern.' },
     })
     expect(h.auth.getUser).not.toHaveBeenCalled()
-    expect(h.fehlversuchZaehlen).not.toHaveBeenCalled()
+    expect(h.gezaehlt).toEqual([])
   })
 })
 
@@ -465,8 +479,30 @@ describe('registrieren', () => {
     const ergebnis = await registrieren(VORHER, formular(felder))
 
     expect(ergebnis).toEqual(ERFOLG)
+    await Promise.all(h.nachAntwort.map((rueckruf) => rueckruf()))
     expect(h.sendeBereitsRegistriert).toHaveBeenCalledTimes(1)
     expect(h.sendeBereitsRegistriert).toHaveBeenCalledWith('neu@example.com')
+  })
+
+  // BUG-11: the mail goes out after the response, so the answer time does not reveal the account.
+  it('answers before the "already registered" mail is sent', async () => {
+    h.auth.signUp.mockResolvedValue({ data: { user: { id: 'fake', identities: [] }, session: null }, error: null })
+    h.sendeBereitsRegistriert.mockImplementation(() => new Promise(() => undefined))
+
+    expect(await registrieren(VORHER, formular(felder))).toEqual(ERFOLG)
+    expect(h.sendeBereitsRegistriert).not.toHaveBeenCalled()
+    expect(h.nachAntwort).toHaveLength(1)
+  })
+
+  // BUG-2: the 60-second resend limit only hits addresses that already have an account.
+  it('answers the resend limit like a new registration', async () => {
+    h.auth.signUp.mockResolvedValue({
+      data: { user: null, session: null },
+      error: { code: 'over_email_send_rate_limit', status: 429, message: 'raw supabase text' },
+    })
+
+    expect(await registrieren(VORHER, formular(felder))).toEqual(ERFOLG)
+    expect(h.nachAntwort).toHaveLength(0)
   })
 
   it('shows the invitation message when the hook rejects the address (AC-2)', async () => {
@@ -485,7 +521,7 @@ describe('registrieren', () => {
   it.each([
     ['weak_password', 'passwort_zu_kurz', 'Das Passwort muss mindestens 12 Zeichen haben.'],
     ['captcha_failed', 'captcha', CAPTCHA_FEHLER],
-    ['over_email_send_rate_limit', 'dienst_nicht_erreichbar', NICHT_ERREICHBAR],
+    ['over_request_rate_limit', 'dienst_nicht_erreichbar', NICHT_ERREICHBAR],
     ['user_already_exists', 'unerwartet', 'Das hat nicht geklappt. Bitte versuche es erneut.'],
     ['signup_disabled', 'unerwartet', 'Das hat nicht geklappt. Bitte versuche es erneut.'],
   ])('maps the Supabase error %s to %s', async (code, kategorie, meldung) => {
@@ -618,6 +654,15 @@ describe('passwortVergessen', () => {
     expect(await passwortVergessen(VORHER, formular(felder))).toEqual(NEUTRAL)
   })
 
+  // BUG-2: the 60-second resend limit only hits addresses that have an account.
+  it('answers the resend limit of an existing account neutrally', async () => {
+    h.auth.resetPasswordForEmail.mockResolvedValue({
+      data: null,
+      error: { code: 'over_email_send_rate_limit', status: 429, message: 'For security purposes…' },
+    })
+    expect(await passwortVergessen(VORHER, formular(felder))).toEqual(NEUTRAL)
+  })
+
   it('reports captcha and outage errors', async () => {
     h.auth.resetPasswordForEmail.mockResolvedValue({
       data: null,
@@ -670,8 +715,9 @@ describe('passwortNeuSetzen', () => {
     expect(await umleitung(passwortNeuSetzen(VORHER, formular(felder)))).toBe('/wohnungen')
   })
 
-  it('needs the session of the recovery link', async () => {
-    h.auth.getUser.mockResolvedValue({ data: { user: null }, error: { status: 400, message: 'Auth session missing!' } })
+  // BUG-1: any other session - e.g. a normal sign-in on an unattended device - is refused.
+  it('needs the fresh session of the recovery link', async () => {
+    h.wiederherstellungsEmail.mockResolvedValue(null)
     const ergebnis = await passwortNeuSetzen(VORHER, formular(felder))
 
     expect(ergebnis).toEqual({
@@ -717,8 +763,7 @@ describe('passwortNeuSetzen', () => {
       code: 'code_falsch',
       meldung: 'Der Code ist falsch oder abgelaufen.',
     })
-    expect(h.fehlversuchZaehlen).toHaveBeenCalledTimes(1)
-    expect(h.fehlversuchZaehlen).toHaveBeenCalledWith('anna@example.com', 'totp')
+    expect(h.gezaehlt).toEqual([['anna@example.com', 'totp']])
     expect(h.auth.updateUser).not.toHaveBeenCalled()
   })
 
@@ -772,7 +817,7 @@ describe('passwortNeuSetzen', () => {
       code: 'eingabe',
       feldFehler: { passwort: 'Das Passwort muss mindestens 12 Zeichen haben.' },
     })
-    expect(h.auth.getUser).not.toHaveBeenCalled()
+    expect(h.wiederherstellungsEmail).not.toHaveBeenCalled()
     expect(h.auth.updateUser).not.toHaveBeenCalled()
   })
 })

@@ -5,9 +5,10 @@
 // message ever reaches the browser.
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { after } from 'next/server'
 import type { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { fehlversuchZaehlen, fehlversucheLoeschen, sperreLesen } from './konto.data'
+import { alsVersuch, fehlversucheLoeschen, wiederherstellungsEmail } from './konto.data'
 import {
   AKTIVITAET_COOKIE,
   AKTIVITAET_COOKIE_OPTIONEN,
@@ -16,6 +17,7 @@ import {
   fehlerMeldung,
   istInaktiv,
   sperrMeldung,
+  verraetKonto,
   type AuthFehler,
 } from './konto.rules'
 import {
@@ -117,43 +119,38 @@ async function zweiterFaktorOffen(supabase: Client): Promise<boolean> {
   }
 }
 
-/** Lock check (AC-22). Returns the rejection while the address is locked, else null. */
-async function sperrePruefen(email: string): Promise<AktionsErgebnis | null> {
-  const sperre = await sperreLesen(email)
-  if (!sperre.gesperrt) return null
-  const jetzt = new Date()
-  return { ok: false, code: 'gesperrt', meldung: sperrMeldung(sperre.gesperrtBis ?? jetzt, jetzt) }
+/** AC-22: rejection while the address is locked. */
+function gesperrt(gesperrtBis: Date): AktionsErgebnis {
+  return { ok: false, code: 'gesperrt', meldung: sperrMeldung(gesperrtBis, new Date()) }
 }
 
 /**
- * Checks a TOTP code against the user's verified factors (there may be two authenticators),
- * with lock check before and attempt counting after. Returns null when the code was accepted.
+ * Checks a TOTP code against the user's verified factors (there may be two authenticators)
+ * as one counted attempt. Returns null when the code was accepted.
  */
 async function totpPruefen(
   supabase: Client,
   email: string,
   code: string,
 ): Promise<AktionsErgebnis | null> {
-  const gesperrt = await sperrePruefen(email)
-  if (gesperrt) return gesperrt
+  const versuch = await alsVersuch(email, 'totp', async () => {
+    const { data, error } = await supabase.auth.mfa.listFactors()
+    if (error || !data) return { falsch: false, wert: fehler(authFehler(error)) }
 
-  const { data, error } = await supabase.auth.mfa.listFactors()
-  if (error || !data) return fehler(authFehler(error))
-
-  for (const faktor of data.totp.filter((f) => f.status === 'verified')) {
-    const { error: pruefFehler } = await supabase.auth.mfa.challengeAndVerify({
-      factorId: faktor.id,
-      code,
-    })
-    if (!pruefFehler) return null
-    // An outage is not a wrong code: do not count it.
-    if (authFehler(pruefFehler) === 'dienst_nicht_erreichbar') {
-      return fehler('dienst_nicht_erreichbar')
+    for (const faktor of data.totp.filter((f) => f.status === 'verified')) {
+      const { error: pruefFehler } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: faktor.id,
+        code,
+      })
+      if (!pruefFehler) return { falsch: false, wert: null }
+      // An outage is not a wrong code: do not count it.
+      if (authFehler(pruefFehler) === 'dienst_nicht_erreichbar') {
+        return { falsch: false, wert: fehler('dienst_nicht_erreichbar') }
+      }
     }
-  }
-
-  await fehlversuchZaehlen(email, 'totp')
-  return fehler('code_falsch')
+    return { falsch: true, wert: fehler('code_falsch') }
+  })
+  return versuch.gesperrt ? gesperrt(versuch.gesperrtBis) : versuch.wert
 }
 
 export async function anmelden(
@@ -172,20 +169,18 @@ export async function anmelden(
     if (!captchaToken) return fehler('captcha')
 
     // AC-22: a locked address is rejected before the credentials are even looked at.
-    const gesperrt = await sperrePruefen(email)
-    if (gesperrt) return gesperrt
-
     const supabase = await createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password: passwort,
-      options: { captchaToken },
+    const versuch = await alsVersuch(email, 'passwort', async () => {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: passwort,
+        options: { captchaToken },
+      })
+      const kategorie = error ? authFehler(error) : null
+      return { falsch: kategorie === 'anmeldung_falsch', wert: kategorie }
     })
-    if (error) {
-      const kategorie = authFehler(error)
-      if (kategorie === 'anmeldung_falsch') await fehlversuchZaehlen(email, 'passwort')
-      return fehler(kategorie)
-    }
+    if (versuch.gesperrt) return gesperrt(versuch.gesperrtBis)
+    if (versuch.wert) return fehler(versuch.wert)
 
     await aktivitaetSetzen()
     // The attempts stay until the second factor has passed.
@@ -242,7 +237,8 @@ export async function registrieren(
       password: passwort,
       options: { captchaToken, emailRedirectTo: bestaetigenUrl() },
     })
-    if (error) {
+    // BUG-2: the resend limit only hits existing addresses — same answer as for a new one.
+    if (error && !verraetKonto(error)) {
       const kategorie = authFehler(error)
       const benannt: AuthFehler[] = [
         'nur_auf_einladung',
@@ -256,8 +252,9 @@ export async function registrieren(
     // With "Confirm email" on, Supabase answers a sign-up for an existing address with an
     // obfuscated user without identities. Same answer as for a new address (AC-24); the
     // owner of the address gets a notice instead.
-    if (Array.isArray(data.user?.identities) && data.user.identities.length === 0) {
-      await sendeBereitsRegistriert(email).catch(() => false)
+    // BUG-11: sent after the response, so the answer time does not reveal the account.
+    if (!error && Array.isArray(data.user?.identities) && data.user.identities.length === 0) {
+      after(() => sendeBereitsRegistriert(email).catch(() => false))
     }
     return { ok: true, meldung: MELDUNG.registriert }
   })
@@ -282,7 +279,8 @@ export async function bestaetigungErneutSenden(
       email: email.data,
       options: { captchaToken, emailRedirectTo: bestaetigenUrl() },
     })
-    const kategorie = error ? authFehler(error) : null
+    // BUG-2: errors that only an existing account can cause get the neutral answer too.
+    const kategorie = error && !verraetKonto(error) ? authFehler(error) : null
     if (kategorie === 'captcha' || kategorie === 'dienst_nicht_erreichbar') return fehler(kategorie)
 
     // Every other outcome gets the same answer: no account enumeration.
@@ -308,7 +306,8 @@ export async function passwortVergessen(
       captchaToken,
       redirectTo: bestaetigenUrl(),
     })
-    const kategorie = error ? authFehler(error) : null
+    // BUG-2: errors that only an existing account can cause get the neutral answer too.
+    const kategorie = error && !verraetKonto(error) ? authFehler(error) : null
     if (kategorie === 'captcha' || kategorie === 'dienst_nicht_erreichbar') return fehler(kategorie)
 
     // AC-11: same answer whether or not an account exists.
@@ -327,11 +326,10 @@ export async function passwortNeuSetzen(
     })
     if (!eingabe.success) return eingabeFehler(eingabe.error)
 
-    const supabase = await createClient()
-    // The recovery link created the session.
-    const { data } = await supabase.auth.getUser()
-    const email = data?.user?.email
+    // BUG-1: only a session the recovery link created moments ago — never any signed-in session.
+    const email = await wiederherstellungsEmail()
     if (!email) return { ok: false, code: 'nicht_angemeldet', meldung: LINK_ABGELAUFEN }
+    const supabase = await createClient()
 
     // A recovery link alone must not replace the password of a 2FA-protected account.
     if (await zweiterFaktorOffen(supabase)) {

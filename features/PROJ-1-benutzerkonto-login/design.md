@@ -226,3 +226,35 @@ Die Rate-Limits von Supabase (Authentication → Rate Limits) bleiben auf den St
 - **Datenbank geprüft:** 33 zurückgerollte SQL-Prüfungen gegen das Dev-Projekt (Freigabe, RLS mit zwei Konten, 2FA-Stufe, Sperre, Kontolöschung, 7-Tage-Aufräumen) bestanden am 2026-11-14.
 - **Lint-Warnungen, bewusst nicht unterdrückt:** `window.location.assign` im Sitzungswächter (volle Navigation ist gewollt, damit der Proxy entscheidet) und `<img>` für den QR-Code (fertige Data-URI von Supabase).
 - **Design-System-Werte unter 4,5:1, nicht geändert:** Titelleisten-Verlaufsende im Dunkelmodus (3,54:1), „Positiv“ auf Fensterfläche im Hellmodus (4,27:1).
+
+## Umsetzungsnotizen – QA-Fixes (`/build`, 2026-11-15)
+
+Behebt BUG-1 bis BUG-12 aus `qa-report.md`. Abweichungen vom Entwurf oben, mit Freigabe des Nutzers am 2026-11-15:
+
+- **Server-Schlüssel für den Fehlversuchszähler (BUG-6, ersetzt die Notiz „Sperre von außen auslösbar“):** Die Zählerfunktionen verlangen einen eigenen, engen Schlüssel – in Supabase Vault unter dem Namen `login_sperre_schluessel` und als `LOGIN_SPERRE_SCHLUESSEL` in der Server-Umgebung. Kein Admin-Schlüssel: Er öffnet nur `login_versuch_beginnen` und `login_versuch_zuruecknehmen`. Fehlt er, lehnt die App jede Anmeldung mit „Dienst nicht erreichbar“ ab (fail closed). Die alten Funktionen `login_sperre_pruefen` und `login_fehlversuch_zaehlen` sind entfernt (Migration `20261115120000_konto_haertung.sql`).
+- **Prüfen und Zählen in einem Schritt (BUG-10):** `login_versuch_beginnen` prüft die Sperre und zählt den Versuch sofort, serialisiert je E-Mail über einen Advisory Lock. Stimmen die Zugangsdaten oder fällt der Dienst aus, gibt die App den Versuch zurück. Die Sperrregel selbst ist unverändert. In der App kapselt `alsVersuch` (`konto.data.ts`) diesen Ablauf für alle vier Prüfstellen.
+- **Konto löschen nur mit frischer Anmeldung (BUG-3):** `delete_own_account` verlangt im Token der aufrufenden Sitzung eine Passwort-Anmeldung, die höchstens 5 Minuten alt ist, und bei eingerichteter 2FA zusätzlich einen höchstens 5 Minuten alten Code. Die Action führt deshalb Passwortprüfung, Code-Prüfung und Löschung auf der frischen Einmal-Sitzung aus.
+- **Passwortwechsel verlangt bei Supabase das aktuelle Passwort (BUG-3):** `require_current_password = true` in `supabase/config.toml`; `passwortAendern` gibt es als `current_password` mit. Sitzungen aus einem Wiederherstellungslink sind bei Supabase davon ausgenommen.
+- **„Neues Passwort setzen“ nur aus dem Wiederherstellungslink (BUG-1):** Seite und Action prüfen die verifizierten Token-Claims (`getClaims`): Der `amr`-Claim muss `recovery` (oder `otp`) mit einem Zeitstempel von höchstens 15 Minuten enthalten. Eine normale Anmeldung reicht nicht mehr. Annahme: Supabase trägt nach `verifyOtp` mit Typ `recovery` eine dieser beiden Methoden ein – gegen ein echtes Konto noch nicht geprüft.
+- **Abgelaufene Sitzung beim Speichern (BUG-7):** `mitSitzung` leitet bei „nicht angemeldet“ auf `/anmelden?weiter=<Herkunftsseite>` um, die Herkunftsseite kommt aus dem `Referer`. Die Referrer-Policy `strict-origin-when-cross-origin` liefert ihn bei gleicher Herkunft vollständig.
+- **Sicherheits-Header (BUG-5):** in `next.config.ts` für alle Pfade, dazu `poweredByHeader: false`. Die CSP enthält vorerst nur `frame-ancestors`, `base-uri` und `object-src`. Eine Skript-CSP mit Nonces kommt später, zuerst als Report-Only.
+- **Weitere Fixes:** Das 60-Sekunden-Mailfrequenzlimit wird bei Registrieren, „Bestätigung erneut senden“ und „Passwort vergessen“ wie Erfolg beantwortet (BUG-2). Die Mail „bereits registriert“ geht erst nach der Antwort raus, über `after()` (BUG-11). Die Passwortlänge zählt UTF-8-Bytes (BUG-12). Auth-Cookies sind in Produktion `Secure` (BUG-9). „Abmelden“ in der Statusleiste benachrichtigt die anderen Tabs (BUG-8).
+- **Datenbank geprüft:** 11 zurückgerollte SQL-Prüfungen gegen das Dev-Projekt bestanden am 2026-11-15: ohne Schlüssel abgelehnt, sechster Versuch gesperrt, Rückgabe gibt einen Platz frei, falsche Art abgelehnt, Tabelle für anon gesperrt, alte Funktion entfernt, Löschen mit alter Sitzung bzw. altem Code abgelehnt, frisch gelöscht inkl. Freigabe-Eintrag. Das Skript liegt nicht im Repo. Gleichzeitige Versuche (der Advisory Lock) sind nur im Code belegt.
+
+### Einstellungen, die du selbst machst (neu durch die QA-Fixes)
+
+| Einstellung | Wo | Wann | Wert | → Bug/AC |
+| --- | --- | --- | --- | --- |
+| Server-Schlüssel erzeugen und hinterlegen | eigener Rechner: `openssl rand -hex 32` (oder ein Passwortmanager, mindestens 32 Zeichen) → Supabase (Dev) → SQL Editor: `select vault.create_secret('<wert>', 'login_sperre_schluessel');` → derselbe Wert als `LOGIN_SPERRE_SCHLUESSEL` in `.env.local` | now | zufällig, nur Server | BUG-6, AC-22 |
+| Aktuelles Passwort beim Passwortwechsel verlangen | Supabase (Dev) → Authentication → Sign In / Providers → Email → Option zum aktuellen Passwort; alternativ `supabase config push` (der Wert steht in `config.toml`) | now | an | BUG-3, AC-16 |
+| Beides im Prod-Projekt wiederholen | Supabase (Prod), eigener Schlüssel; Vercel-Umgebungsvariable `LOGIN_SPERRE_SCHLUESSEL` | go-live (`/deploy`, gehört zu T35) | eigener Wert je Projekt | BUG-3, BUG-6 |
+
+### Ausnahmen nach SEC-08 (freigegeben vom Nutzer am 2026-11-15)
+
+Diese Restrisiken lassen sich im Free-Tarif nicht an der Supabase-Schnittstelle durchsetzen. Sie gelten als bewusste Ausnahmen, nicht als offene Bugs.
+
+| ID | Kontrolle | Restrisiko | Warum hingenommen | Erneut prüfen, wenn … |
+| --- | --- | --- | --- | --- |
+| EX-1 (BUG-4) | SEC-04, AC-22, EC-9 | 2FA-Codes, die direkt an `/auth/v1/factors/{id}/verify` gehen, sieht der Fehlversuchszähler der App nicht; es bleibt nur das IP-Limit von Supabase. Voraussetzung ist das Passwort (Sitzung der Stufe 1 mit CAPTCHA). | Der „MFA Verification Attempt“-Hook gibt es nur in höheren Tarifen. Der Anon-Schlüssel wird derzeit nicht an den Browser ausgeliefert. | Wechsel auf Supabase Pro/Team oder ein Feature liefert den Browser-Client aus |
+| EX-2 (BUG-3, Rest) | SEC-03, AC-14, AC-27 | Mit einer übernommenen Sitzung der Stufe 2 lässt sich 2FA direkt bei Supabase ausschalten (unenroll), ohne Code und ohne Sicherheitsmail. | Supabase verlangt für unenroll nur eine Sitzung der Stufe 2; eine Datenbankprüfung ist dort nicht möglich. | wie EX-1 |
+| EX-3 (BUG-3, Rest) | AC-27 | Wer das Passwort kennt, kann es direkt bei Supabase ändern, ohne dass die Sicherheitsmail der App kommt. | Die Supabase-eigene Benachrichtigung braucht im Free-Tarif eigenen SMTP-Versand (kommt mit T34) und wäre doppelt. | Brevo-SMTP aktiv (T34) oder Wechsel auf Pro |

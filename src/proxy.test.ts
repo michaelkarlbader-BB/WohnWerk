@@ -271,6 +271,18 @@ describe('sitzungsCookieOptionen', () => {
     expect(sitzungsCookieOptionen({ ...optionen, maxAge: 0 }, 'x').maxAge).toBe(0)
     expect(sitzungsCookieOptionen(optionen, '').maxAge).toBe(optionen.maxAge)
   })
+
+  // BUG-9: the library sets no Secure flag; in production every auth cookie gets one.
+  it('marks set and removed cookies as Secure in production only', () => {
+    expect(sitzungsCookieOptionen(optionen, 'token', true).secure).toBe(true)
+    expect(sitzungsCookieOptionen({ ...optionen, maxAge: 0 }, '', true)).toEqual({
+      ...optionen,
+      maxAge: 0,
+      secure: true,
+    })
+    expect(sitzungsCookieOptionen({ ...optionen, secure: false }, 'token', true).secure).toBe(true)
+    expect(sitzungsCookieOptionen(optionen, 'token', false).secure).toBeUndefined()
+  })
 })
 
 describe('uebernehmeCookies', () => {

@@ -11,11 +11,17 @@ const CACHE_KOPFZEILEN = ['cache-control', 'expires', 'pragma'] as const
  * Turns the library's cookie options into session-cookie options: without `maxAge`/`expires`
  * the browser drops the cookie when it closes (the library default is 400 days).
  * A removal (empty value or `maxAge: 0`) keeps its options, otherwise it would not remove anything.
+ * In production every auth cookie is `Secure` (BUG-9); local development runs on plain http.
  */
-export function sitzungsCookieOptionen(options: CookieOptions, value: string): CookieOptions {
-  if (value === '' || options.maxAge === 0) return options
+export function sitzungsCookieOptionen(
+  options: CookieOptions,
+  value: string,
+  produktion = process.env.NODE_ENV === 'production',
+): CookieOptions {
+  const gehaertet = produktion ? { ...options, secure: true } : options
+  if (value === '' || options.maxAge === 0) return gehaertet
 
-  const sitzung = { ...options }
+  const sitzung = { ...gehaertet }
   delete sitzung.maxAge
   delete sitzung.expires
   return sitzung

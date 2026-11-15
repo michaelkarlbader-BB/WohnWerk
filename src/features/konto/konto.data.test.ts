@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
 
@@ -12,6 +12,9 @@ const fake = vi.hoisted(() => {
     selectAntwort: { data: null, error: null } as { data: unknown; error: unknown },
     updateAntwort: { data: [{ id: 'user-1' }], error: null } as { data: unknown; error: unknown },
     rpcAntwort: { data: null, error: null } as { data: unknown; error: unknown },
+    /** Answers in call order; when empty, `rpcAntwort` answers. */
+    rpcFolge: [] as { data: unknown; error: unknown }[],
+    claimsAntwort: { data: null, error: null } as { data: unknown; error: unknown },
     userAntwort: { data: { user: { id: 'user-1' } }, error: null } as { data: unknown; error: unknown },
     clientFehler: null as unknown,
   }
@@ -53,12 +56,16 @@ const fake = vi.hoisted(() => {
     },
     async rpc(...args: unknown[]) {
       merke('rpc', args)
-      return zustand.rpcAntwort
+      return zustand.rpcFolge.shift() ?? zustand.rpcAntwort
     },
     auth: {
       async getUser() {
         merke('getUser', [])
         return zustand.userAntwort
+      },
+      async getClaims() {
+        merke('getClaims', [])
+        return zustand.claimsAntwort
       },
     },
   }
@@ -73,17 +80,19 @@ vi.mock('@/lib/supabase/server', () => ({
   },
 }))
 
+import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   DatenFehler,
+  alsVersuch,
   anzeigenameAendern,
   eigenesKontoLoeschen,
-  fehlversuchZaehlen,
   fehlversucheLoeschen,
   profilLesen,
-  sperreLesen,
+  wiederherstellungsEmail,
 } from './konto.data'
 
 const z = fake.zustand
+const SCHLUESSEL = 'k'.repeat(40)
 const dbFehler = { message: 'boom', code: 'XX000' }
 const aufrufe = (methode: string) => z.aufrufe.filter((a) => a.methode === methode)
 
@@ -96,8 +105,15 @@ beforeEach(() => {
   z.selectAntwort = { data: null, error: null }
   z.updateAntwort = { data: [{ id: 'user-1' }], error: null }
   z.rpcAntwort = { data: null, error: null }
+  z.rpcFolge = []
+  z.claimsAntwort = { data: null, error: null }
   z.userAntwort = { data: { user: { id: 'user-1' } }, error: null }
   z.clientFehler = null
+  vi.stubEnv('LOGIN_SPERRE_SCHLUESSEL', SCHLUESSEL)
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
 })
 
 describe('profilLesen', () => {
@@ -211,73 +227,172 @@ describe('anzeigenameAendern', () => {
   })
 })
 
-describe('sperreLesen', () => {
-  it('maps a locked row to gesperrt with a Date', async () => {
-    setze({ rpcAntwort: { data: [{ gesperrt: true, gesperrt_bis: '2026-01-01T10:15:00Z' }], error: null } })
+describe('alsVersuch (AC-22, BUG-6, BUG-10)', () => {
+  const frei = { data: [{ gesperrt: false, gesperrt_bis: null, versuch_id: 41 }], error: null }
+  const gesperrt = {
+    data: [{ gesperrt: true, gesperrt_bis: '2026-01-01T10:15:00Z', versuch_id: null }],
+    error: null,
+  }
+  const zuruecknehmen = {
+    methode: 'rpc',
+    args: ['login_versuch_zuruecknehmen', { p_schluessel: SCHLUESSEL, p_versuch_id: 41 }],
+  }
 
-    await expect(sperreLesen('a@example.com')).resolves.toEqual({
+  it('reserves the attempt with the server key before the check', async () => {
+    z.rpcFolge = [frei]
+    let rpcVorPruefung = -1
+    await alsVersuch('a@example.com', 'passwort', async () => {
+      rpcVorPruefung = aufrufe('rpc').length
+      return { falsch: true, wert: 'x' }
+    })
+
+    expect(aufrufe('rpc')[0].args).toEqual([
+      'login_versuch_beginnen',
+      { p_schluessel: SCHLUESSEL, p_email: 'a@example.com', p_art: 'passwort' },
+    ])
+    expect(rpcVorPruefung).toBe(1)
+  })
+
+  it('keeps the attempt counted when the credentials were wrong', async () => {
+    z.rpcFolge = [frei]
+
+    await expect(
+      alsVersuch('a@example.com', 'totp', async () => ({ falsch: true, wert: 'falsch' })),
+    ).resolves.toEqual({ gesperrt: false, wert: 'falsch' })
+    expect(aufrufe('rpc')).toHaveLength(1)
+  })
+
+  it('gives the attempt back when the credentials were right', async () => {
+    z.rpcFolge = [frei]
+
+    await expect(
+      alsVersuch('a@example.com', 'passwort', async () => ({ falsch: false, wert: 'ok' })),
+    ).resolves.toEqual({ gesperrt: false, wert: 'ok' })
+    expect(aufrufe('rpc')[1]).toEqual(zuruecknehmen)
+  })
+
+  it('gives the attempt back and rethrows when the check throws', async () => {
+    z.rpcFolge = [frei]
+    const ausfall = new TypeError('fetch failed')
+
+    await expect(
+      alsVersuch('a@example.com', 'passwort', async () => {
+        throw ausfall
+      }),
+    ).rejects.toBe(ausfall)
+    expect(aufrufe('rpc')[1]).toEqual(zuruecknehmen)
+  })
+
+  it('does not fail when giving the attempt back fails', async () => {
+    z.rpcFolge = [frei, { data: null, error: dbFehler }]
+
+    await expect(
+      alsVersuch('a@example.com', 'passwort', async () => ({ falsch: false, wert: 'ok' })),
+    ).resolves.toEqual({ gesperrt: false, wert: 'ok' })
+  })
+
+  it('never runs the check for a locked address', async () => {
+    z.rpcFolge = [gesperrt]
+    const pruefen = vi.fn(async () => ({ falsch: false, wert: 'ok' }))
+
+    await expect(alsVersuch('a@example.com', 'passwort', pruefen)).resolves.toEqual({
       gesperrt: true,
       gesperrtBis: new Date('2026-01-01T10:15:00Z'),
     })
-    expect(aufrufe('rpc')[0].args).toEqual(['login_sperre_pruefen', { p_email: 'a@example.com' }])
-  })
-
-  it('maps an unlocked row', async () => {
-    setze({ rpcAntwort: { data: [{ gesperrt: false, gesperrt_bis: null }], error: null } })
-
-    await expect(sperreLesen('a@example.com')).resolves.toEqual({ gesperrt: false, gesperrtBis: null })
+    expect(pruefen).not.toHaveBeenCalled()
+    expect(aufrufe('rpc')).toHaveLength(1)
   })
 
   it.each([
     ['a database error', { data: null, error: dbFehler }],
-    ['an error next to a not-locked row', { data: [{ gesperrt: false, gesperrt_bis: null }], error: dbFehler }],
+    ['an error next to a free row', { ...frei, error: dbFehler }],
     ['an empty array', { data: [], error: null }],
     ['null data', { data: null, error: null }],
-    ['a row without a boolean', { data: [{ gesperrt: null, gesperrt_bis: null }], error: null }],
-    ['an unreadable timestamp', { data: [{ gesperrt: true, gesperrt_bis: 'kein Datum' }], error: null }],
-  ])('fails closed on %s', async (_name, rpcAntwort) => {
-    setze({ rpcAntwort })
+    ['a row without a boolean', { data: [{ gesperrt: null, gesperrt_bis: null, versuch_id: 1 }], error: null }],
+    ['a free row without an id', { data: [{ gesperrt: false, gesperrt_bis: null, versuch_id: null }], error: null }],
+    ['an unreadable timestamp', { data: [{ gesperrt: true, gesperrt_bis: 'kein Datum', versuch_id: null }], error: null }],
+  ])('fails closed on %s without running the check', async (_name, antwort) => {
+    z.rpcFolge = [antwort]
+    const pruefen = vi.fn(async () => ({ falsch: false, wert: 'ok' }))
 
-    await expect(sperreLesen('a@example.com')).rejects.toBeInstanceOf(DatenFehler)
+    await expect(alsVersuch('a@example.com', 'passwort', pruefen)).rejects.toBeInstanceOf(DatenFehler)
+    expect(pruefen).not.toHaveBeenCalled()
   })
 
-  it('fails closed when the client cannot be created', async () => {
-    z.clientFehler = new TypeError('fetch failed')
+  it('fails closed without the server key and never calls the database', async () => {
+    vi.stubEnv('LOGIN_SPERRE_SCHLUESSEL', '')
+    const pruefen = vi.fn(async () => ({ falsch: false, wert: 'ok' }))
 
-    await expect(sperreLesen('a@example.com')).rejects.toBeInstanceOf(DatenFehler)
-  })
-})
-
-describe('fehlversuchZaehlen', () => {
-  it.each(['passwort', 'totp'] as const)('passes e-mail and kind %s', async (art) => {
-    await expect(fehlversuchZaehlen('a@example.com', art)).resolves.toBeUndefined()
-
-    expect(aufrufe('rpc')).toEqual([
-      { methode: 'rpc', args: ['login_fehlversuch_zaehlen', { p_email: 'a@example.com', p_art: art }] },
-    ])
-  })
-
-  it('throws DatenFehler on error', async () => {
-    setze({ rpcAntwort: { data: null, error: dbFehler } })
-
-    await expect(fehlversuchZaehlen('a@example.com', 'passwort')).rejects.toBeInstanceOf(DatenFehler)
+    await expect(alsVersuch('a@example.com', 'passwort', pruefen)).rejects.toBeInstanceOf(DatenFehler)
+    expect(aufrufe('rpc')).toHaveLength(0)
+    expect(pruefen).not.toHaveBeenCalled()
   })
 })
 
-describe.each([
-  ['fehlversucheLoeschen', fehlversucheLoeschen, 'login_fehlversuche_loeschen'],
-  ['eigenesKontoLoeschen', eigenesKontoLoeschen, 'delete_own_account'],
-] as const)('%s', (_name, funktion, rpcName) => {
+describe('wiederherstellungsEmail (BUG-1)', () => {
+  const jetztSek = () => Math.floor(Date.now() / 1000)
+  const claims = (amr: unknown, email: unknown = 'a@example.com') => ({
+    data: { claims: { amr, email } },
+    error: null,
+  })
+
+  it('returns the e-mail of a session from a recovery link opened moments ago', async () => {
+    z.claimsAntwort = claims([{ method: 'recovery', timestamp: jetztSek() - 60 }])
+
+    await expect(wiederherstellungsEmail()).resolves.toBe('a@example.com')
+    expect(aufrufe('getClaims')).toHaveLength(1)
+  })
+
+  it.each([
+    ['a password session', () => claims([{ method: 'password', timestamp: jetztSek() - 60 }])],
+    [
+      'a password + 2FA session',
+      () =>
+        claims([
+          { method: 'password', timestamp: jetztSek() },
+          { method: 'totp', timestamp: jetztSek() },
+        ]),
+    ],
+    ['an old recovery link', () => claims([{ method: 'recovery', timestamp: jetztSek() - 16 * 60 }])],
+    ['claims without e-mail', () => claims([{ method: 'recovery', timestamp: jetztSek() }], null)],
+    ['no claims', () => ({ data: null, error: null })],
+    ['a claims error', () => ({ data: null, error: dbFehler })],
+  ])('returns null for %s', async (_name, antwort) => {
+    z.claimsAntwort = antwort()
+
+    await expect(wiederherstellungsEmail()).resolves.toBeNull()
+  })
+})
+
+describe('fehlversucheLoeschen', () => {
   it('calls the rpc without arguments', async () => {
-    await expect(funktion()).resolves.toBeUndefined()
+    await expect(fehlversucheLoeschen()).resolves.toBeUndefined()
 
-    expect(aufrufe('rpc')).toEqual([{ methode: 'rpc', args: [rpcName] }])
+    expect(aufrufe('rpc')).toEqual([{ methode: 'rpc', args: ['login_fehlversuche_loeschen'] }])
   })
 
   it('throws DatenFehler with the original error as cause', async () => {
     setze({ rpcAntwort: { data: null, error: dbFehler } })
 
-    const fehler = await funktion().catch((e: unknown) => e)
+    const fehler = await fehlversucheLoeschen().catch((e: unknown) => e)
+    expect(fehler).toBeInstanceOf(DatenFehler)
+    expect((fehler as DatenFehler).cause).toBe(dbFehler)
+  })
+})
+
+describe('eigenesKontoLoeschen (BUG-3)', () => {
+  const frischeSitzung = () => fake.client as unknown as SupabaseClient
+
+  it('calls the rpc through the fresh session it is given', async () => {
+    await expect(eigenesKontoLoeschen(frischeSitzung())).resolves.toBeUndefined()
+
+    expect(aufrufe('rpc')).toEqual([{ methode: 'rpc', args: ['delete_own_account'] }])
+  })
+
+  it('throws DatenFehler with the original error as cause', async () => {
+    setze({ rpcAntwort: { data: null, error: dbFehler } })
+
+    const fehler = await eigenesKontoLoeschen(frischeSitzung()).catch((e: unknown) => e)
     expect(fehler).toBeInstanceOf(DatenFehler)
     expect((fehler as DatenFehler).cause).toBe(dbFehler)
   })

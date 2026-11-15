@@ -94,6 +94,25 @@ describe('Browser-Client: Cookies schreiben (AC-7)', () => {
   })
 })
 
+describe('Browser-Client: Secure in Produktion (BUG-9)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('setzt Secure in Produktion, auch beim Löschen', () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    methoden().setAll([
+      { name: 'sb-test-auth-token', value: 'base64-abc', options: BIBLIOTHEK_OPTIONEN },
+      { name: 'sb-test-auth-token', value: '', options: BIBLIOTHEK_OPTIONEN },
+    ])
+
+    expect(geschrieben).toEqual([
+      'sb-test-auth-token=base64-abc; Path=/; SameSite=lax; Secure',
+      'sb-test-auth-token=; Path=/; Max-Age=0; SameSite=lax; Secure',
+    ])
+  })
+})
+
 describe('Browser-Client: Cookies lesen', () => {
   it('liest, dekodiert und überspringt Doppelte und Einträge ohne Namen', () => {
     cookieTextFuerGetter = 'sb-a=a%20b; =leer; ohne-trenner; sb-b=roh%ZZ; sb-a=zweiter'

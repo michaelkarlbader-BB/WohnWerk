@@ -35,7 +35,8 @@ function schreibeCookie(name: string, value: string, options: CookieOptions): vo
   if (loeschen) teile.push('Max-Age=0')
   if (options.sameSite === true) teile.push('SameSite=Strict')
   else if (options.sameSite) teile.push(`SameSite=${options.sameSite}`)
-  if (options.secure) teile.push('Secure')
+  // BUG-9: the library sets no Secure flag; in production every auth cookie gets one.
+  if (options.secure || process.env.NODE_ENV === 'production') teile.push('Secure')
 
   document.cookie = teile.join('; ')
 }

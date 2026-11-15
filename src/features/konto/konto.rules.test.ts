@@ -8,9 +8,11 @@ import {
   SPERRE_MAX_FEHLVERSUCHE,
   authFehler,
   fehlerMeldung,
+  istFrischeWiederherstellung,
   istInaktiv,
   sperrMeldung,
   sperrstatus,
+  verraetKonto,
 } from './konto.rules'
 
 const JETZT = new Date('2026-11-14T12:00:00.000Z')
@@ -294,5 +296,52 @@ describe('MELDUNG (Texte ohne Fehlerkategorie)', () => {
     expect(MELDUNG.passwortVergessen).toBe(
       'Falls ein Konto existiert, haben wir eine E-Mail gesendet.',
     )
+  })
+})
+
+describe('istFrischeWiederherstellung (BUG-1)', () => {
+  const jetztMs = JETZT.getTime()
+  const sek = (minutenVorher: number) => Math.floor((jetztMs - minutenVorher * MIN) / 1000)
+
+  it.each(['recovery', 'otp'])('accepts a %s session up to 15 minutes old', (method) => {
+    expect(istFrischeWiederherstellung([{ method, timestamp: sek(0) }], jetztMs)).toBe(true)
+    expect(istFrischeWiederherstellung([{ method, timestamp: sek(15) }], jetztMs)).toBe(true)
+  })
+
+  it('accepts recovery next to a later second factor', () => {
+    const amr = [
+      { method: 'totp', timestamp: sek(1) },
+      { method: 'recovery', timestamp: sek(2) },
+    ]
+    expect(istFrischeWiederherstellung(amr, jetztMs)).toBe(true)
+  })
+
+  it.each([
+    ['a password session', [{ method: 'password', timestamp: sek(0) }]],
+    ['password + 2FA', [{ method: 'password', timestamp: sek(0) }, { method: 'totp', timestamp: sek(0) }]],
+    ['a recovery older than 15 minutes', [{ method: 'recovery', timestamp: sek(16) }]],
+    ['a timestamp far in the future', [{ method: 'recovery', timestamp: sek(-5) }]],
+    ['a timestamp as text', [{ method: 'recovery', timestamp: String(sek(0)) }]],
+    ['the RFC string form', ['recovery']],
+    ['an empty list', []],
+    ['no amr at all', undefined],
+    ['an object instead of a list', { method: 'recovery', timestamp: sek(0) }],
+  ])('rejects %s', (_name, amr) => {
+    expect(istFrischeWiederherstellung(amr, jetztMs)).toBe(false)
+  })
+})
+
+describe('verraetKonto (BUG-2)', () => {
+  it('flags the resend limit that only existing accounts hit', () => {
+    expect(verraetKonto({ code: 'over_email_send_rate_limit' })).toBe(true)
+  })
+
+  it.each([
+    ['the per-IP limit', { code: 'over_request_rate_limit' }],
+    ['a failed captcha', { code: 'captcha_failed' }],
+    ['no code', { status: 500 }],
+    ['no error', null],
+  ])('does not flag %s', (_name, fehler) => {
+    expect(verraetKonto(fehler)).toBe(false)
   })
 })

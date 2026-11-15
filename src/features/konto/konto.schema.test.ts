@@ -74,7 +74,17 @@ describe('passwortSchema', () => {
   it('lehnt 73 Zeichen ab', () => {
     const ergebnis = passwortSchema.safeParse('a'.repeat(73))
     expect(ergebnis.success).toBe(false)
-    expect(meldungen(ergebnis)).toEqual(['Das Passwort darf höchstens 72 Zeichen haben.'])
+    expect(meldungen(ergebnis)).toEqual([
+      'Das Passwort ist zu lang: höchstens 72 Zeichen, Umlaute und Sonderzeichen zählen dabei mehrfach.',
+    ])
+  })
+
+  // BUG-12: Supabase zählt Bytes. 40 Umlaute sind 40 Zeichen, aber 80 Bytes.
+  it('zählt Bytes statt Zeichen', () => {
+    expect(passwortSchema.safeParse('ä'.repeat(40)).success).toBe(false)
+    expect(passwortSchema.safeParse('ä'.repeat(36)).success).toBe(true)
+    expect(passwortSchema.safeParse('🔑'.repeat(19)).success).toBe(false)
+    expect(passwortSchema.safeParse('🔑'.repeat(18)).success).toBe(true)
   })
 
   it('schneidet keine Leerzeichen ab', () => {
@@ -89,7 +99,7 @@ describe('vorhandenesPasswortSchema', () => {
   })
 
   it('lehnt leer, zu lang und Nicht-Text ab', () => {
-    for (const wert of ['', 'a'.repeat(73), undefined]) {
+    for (const wert of ['', 'a'.repeat(73), 'ä'.repeat(37), undefined]) {
       const ergebnis = vorhandenesPasswortSchema.safeParse(wert)
       expect(ergebnis.success).toBe(false)
       expect(meldungen(ergebnis)).toEqual(['Bitte gib dein Passwort ein.'])

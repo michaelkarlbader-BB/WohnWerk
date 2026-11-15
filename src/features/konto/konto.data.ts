@@ -3,8 +3,9 @@
 // Security and the database functions decide what the caller may see or change. No service
 // key, and no user-id parameter a caller could forge.
 import 'server-only'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import type { Sperrstatus } from './konto.rules'
+import { istFrischeWiederherstellung } from './konto.rules'
 
 export type Profil = { id: string; anzeigename: string | null; angelegtAm: string }
 
@@ -64,34 +65,98 @@ export async function anzeigenameAendern(anzeigename: string | null): Promise<vo
   })
 }
 
-/** Lock state of an e-mail. Fails closed: any error or unexpected shape throws DatenFehler. */
-export async function sperreLesen(email: string): Promise<Sperrstatus> {
-  return zugriff('sperreLesen', async (supabase) => {
-    const { data, error } = await supabase.rpc('login_sperre_pruefen', { p_email: email })
-    if (error) throw new DatenFehler('sperreLesen failed', error)
+/**
+ * Narrow server key of the attempt functions (BUG-6). Without it the database rejects every
+ * call, so a missing value fails closed instead of skipping the lock.
+ */
+function sperreSchluessel(): string {
+  const schluessel = process.env.LOGIN_SPERRE_SCHLUESSEL
+  if (!schluessel) throw new DatenFehler('LOGIN_SPERRE_SCHLUESSEL is not set')
+  return schluessel
+}
+
+type Reservierung = { gesperrt: true; gesperrtBis: Date } | { gesperrt: false; versuchId: number }
+
+/** Checks the lock and counts the attempt in one database step (BUG-10). Fails closed. */
+async function versuchBeginnen(email: string, art: Fehlversuchsart): Promise<Reservierung> {
+  return zugriff('versuchBeginnen', async (supabase) => {
+    const { data, error } = await supabase.rpc('login_versuch_beginnen', {
+      p_schluessel: sperreSchluessel(),
+      p_email: email,
+      p_art: art,
+    })
+    if (error) throw new DatenFehler('versuchBeginnen failed', error)
 
     const zeile: unknown = Array.isArray(data) ? data[0] : undefined
     if (typeof zeile !== 'object' || zeile === null) {
-      throw new DatenFehler('sperreLesen: unexpected result')
+      throw new DatenFehler('versuchBeginnen: unexpected result')
     }
+    const { gesperrt, gesperrt_bis: bis, versuch_id: id } = zeile as Record<string, unknown>
 
-    const { gesperrt, gesperrt_bis: bis } = zeile as { gesperrt?: unknown; gesperrt_bis?: unknown }
-    if (typeof gesperrt !== 'boolean') throw new DatenFehler('sperreLesen: unexpected result')
-    if (bis === null || bis === undefined) return { gesperrt, gesperrtBis: null }
-
-    const gesperrtBis = typeof bis === 'string' ? new Date(bis) : null
-    if (!gesperrtBis || Number.isNaN(gesperrtBis.getTime())) {
-      throw new DatenFehler('sperreLesen: unexpected result')
+    if (gesperrt === false && typeof id === 'number' && Number.isSafeInteger(id)) {
+      return { gesperrt: false, versuchId: id }
     }
-    return { gesperrt, gesperrtBis }
+    if (gesperrt === true && typeof bis === 'string') {
+      const gesperrtBis = new Date(bis)
+      if (!Number.isNaN(gesperrtBis.getTime())) return { gesperrt: true, gesperrtBis }
+    }
+    throw new DatenFehler('versuchBeginnen: unexpected result')
   })
 }
 
-/** Counts one failed sign-in attempt for the e-mail. */
-export async function fehlversuchZaehlen(email: string, art: 'passwort' | 'totp'): Promise<void> {
-  return zugriff('fehlversuchZaehlen', async (supabase) => {
-    const { error } = await supabase.rpc('login_fehlversuch_zaehlen', { p_email: email, p_art: art })
-    if (error) throw new DatenFehler('fehlversuchZaehlen failed', error)
+/** Gives a reserved attempt back. A failure only leaves one attempt too many counted. */
+async function versuchZuruecknehmenStill(versuchId: number): Promise<void> {
+  try {
+    await zugriff('versuchZuruecknehmen', async (supabase) => {
+      const { error } = await supabase.rpc('login_versuch_zuruecknehmen', {
+        p_schluessel: sperreSchluessel(),
+        p_versuch_id: versuchId,
+      })
+      if (error) throw new DatenFehler('versuchZuruecknehmen failed', error)
+    })
+  } catch {
+    // The attempt ages out after 15 minutes.
+  }
+}
+
+export type Fehlversuchsart = 'passwort' | 'totp'
+export type Versuch<T> = { gesperrt: true; gesperrtBis: Date } | { gesperrt: false; wert: T }
+
+/**
+ * AC-22, EC-9: runs one credential check as a counted attempt. The attempt is reserved before
+ * the check — atomically with the lock check — and given back unless `pruefen` reports wrong
+ * credentials (`falsch: true`). A locked address never reaches `pruefen`.
+ */
+export async function alsVersuch<T>(
+  email: string,
+  art: Fehlversuchsart,
+  pruefen: () => Promise<{ falsch: boolean; wert: T }>,
+): Promise<Versuch<T>> {
+  const reservierung = await versuchBeginnen(email, art)
+  if (reservierung.gesperrt) return reservierung
+
+  let ergebnis: { falsch: boolean; wert: T }
+  try {
+    ergebnis = await pruefen()
+  } catch (fehler) {
+    await versuchZuruecknehmenStill(reservierung.versuchId)
+    throw fehler
+  }
+  if (!ergebnis.falsch) await versuchZuruecknehmenStill(reservierung.versuchId)
+  return { gesperrt: false, wert: ergebnis.wert }
+}
+
+/**
+ * BUG-1: the e-mail of this session, but only when a recovery link created it moments ago
+ * (verified token claims, not the cookie as it stands). Any other session gets null.
+ */
+export async function wiederherstellungsEmail(): Promise<string | null> {
+  return zugriff('wiederherstellungsEmail', async (supabase) => {
+    const { data, error } = await supabase.auth.getClaims()
+    if (error || !data?.claims) return null
+    const { amr, email } = data.claims
+    if (typeof email !== 'string' || !email) return null
+    return istFrischeWiederherstellung(amr, Date.now()) ? email : null
   })
 }
 
@@ -103,10 +168,16 @@ export async function fehlversucheLoeschen(): Promise<void> {
   })
 }
 
-/** Deletes the account of the current session (and its allow-list entry). */
-export async function eigenesKontoLoeschen(): Promise<void> {
-  return zugriff('eigenesKontoLoeschen', async (supabase) => {
-    const { error } = await supabase.rpc('delete_own_account')
+/**
+ * Deletes the account (and its allow-list entry) through `frischeSitzung`: a session that was
+ * created by a password sign-in moments ago — the database rejects any older one (BUG-3).
+ */
+export async function eigenesKontoLoeschen(frischeSitzung: SupabaseClient): Promise<void> {
+  try {
+    const { error } = await frischeSitzung.rpc('delete_own_account')
     if (error) throw new DatenFehler('eigenesKontoLoeschen failed', error)
-  })
+  } catch (fehler) {
+    if (fehler instanceof DatenFehler) throw fehler
+    throw new DatenFehler('eigenesKontoLoeschen failed', fehler)
+  }
 }

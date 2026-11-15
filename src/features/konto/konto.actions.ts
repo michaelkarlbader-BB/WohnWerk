@@ -2,21 +2,15 @@
 
 // Server Actions of the account settings (PROJ-1): display name, e-mail, password,
 // two-factor sign-in and account deletion. Every action follows React `useActionState`.
-import { createClient as createEinmalClient } from '@supabase/supabase-js'
+import { createClient as createEinmalClient, type SupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import {
-  anzeigenameAendern,
-  eigenesKontoLoeschen,
-  fehlversuchZaehlen,
-  sperreLesen,
-} from './konto.data'
+import { alsVersuch, anzeigenameAendern, eigenesKontoLoeschen } from './konto.data'
 import {
   AKTIVITAET_COOKIE,
-  MELDUNG,
   authFehler,
   fehlerMeldung,
   sperrMeldung,
@@ -27,6 +21,7 @@ import {
   emailSchema,
   kontoLoeschenSchema,
   passwortAendernSchema,
+  sichereRuecksprungadresse,
   totpCodeSchema,
 } from './konto.schema'
 import { sendeHinweisAlteAdresse, sendeSicherheitshinweis } from './mail.integration'
@@ -39,7 +34,7 @@ export type AktionsErgebnis = {
   einrichtung?: { factorId: string; qrCode: string; secret: string } // 2FA enrolment step
 }
 
-type Client = Awaited<ReturnType<typeof createClient>>
+type Client = SupabaseClient
 type Sitzung = { supabase: Client; email: string }
 type SupabaseFehler = Parameters<typeof authFehler>[0]
 
@@ -88,14 +83,33 @@ async function sitzungLesen(): Promise<Sitzung | null> {
   return { supabase, email }
 }
 
+/**
+ * EC-3, BUG-7: a session that ended meanwhile (other tab, other device, server-side expiry)
+ * leads to the sign-in window and afterwards back to the page the form was sent from.
+ */
+async function zurAnmeldung(): Promise<never> {
+  let herkunft: string | undefined
+  try {
+    const referer = (await headers()).get('referer')
+    if (referer) {
+      const url = new URL(referer)
+      herkunft = url.pathname + url.search
+    }
+  } catch {
+    // Without a usable referer the sign-in leads to the default page.
+  }
+  const weiter = sichereRuecksprungadresse(herkunft, '')
+  redirect(weiter ? `/anmelden?weiter=${encodeURIComponent(weiter)}` : '/anmelden')
+}
+
 /** Runs one action for the signed-in user; anything thrown becomes "service unavailable". */
 async function mitSitzung(
   aktion: (sitzung: Sitzung) => Promise<AktionsErgebnis>,
 ): Promise<AktionsErgebnis> {
+  let ergebnis: AktionsErgebnis
   try {
     const sitzung = await sitzungLesen()
-    if (!sitzung) return fehler('nicht_angemeldet')
-    return await aktion(sitzung)
+    ergebnis = sitzung ? await aktion(sitzung) : fehler('nicht_angemeldet')
   } catch (ausnahme) {
     // Only the error name: the error itself may carry request details.
     console.error(
@@ -104,53 +118,59 @@ async function mitSitzung(
     )
     return fehler('dienst_nicht_erreichbar')
   }
+  // Outside the try block: redirect() throws by design.
+  if (ergebnis.code === 'nicht_angemeldet') await zurAnmeldung()
+  return ergebnis
 }
 
-async function gesperrt(email: string): Promise<AktionsErgebnis | null> {
-  const sperre = await sperreLesen(email)
-  if (!sperre.gesperrt) return null
-  const meldung = sperre.gesperrtBis
-    ? sperrMeldung(sperre.gesperrtBis, new Date())
-    : MELDUNG.unerwartet
-  return { ok: false, code: 'gesperrt', meldung }
+/** AC-22: rejection while the address is locked. */
+function gesperrt(gesperrtBis: Date): AktionsErgebnis {
+  return { ok: false, code: 'gesperrt', meldung: sperrMeldung(gesperrtBis, new Date()) }
 }
+
+type FrischeAnmeldung = { ergebnis: AktionsErgebnis; einmal?: never } | { ergebnis: null; einmal: Client }
 
 /**
- * Confirms the current password through a sign-in check that counts as an attempt. The check
- * runs on a throw-away client, so the user's cookie session is never replaced.
+ * Confirms the current password through a sign-in that counts as an attempt. It runs on a
+ * throw-away client, so the user's cookie session is never replaced. On success the caller gets
+ * that fresh session and must end it (or use it, e.g. for the deletion that demands it).
  */
-async function passwortPruefen(
+async function frischAnmelden(
   email: string,
   passwort: string,
   captchaToken: string | undefined,
-): Promise<AktionsErgebnis> {
+): Promise<FrischeAnmeldung> {
   // Supabase has CAPTCHA switched on: without a token the sign-in can only fail.
-  if (!captchaToken) return fehler('captcha')
-
-  const sperre = await gesperrt(email)
-  if (sperre) return sperre
+  if (!captchaToken) return { ergebnis: fehler('captcha') }
 
   const einmal = createEinmalClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } },
   )
-  const { error } = await einmal.auth.signInWithPassword({
-    email,
-    password: passwort,
-    options: { captchaToken },
+  const versuch = await alsVersuch(email, 'passwort', async () => {
+    const { error } = await einmal.auth.signInWithPassword({
+      email,
+      password: passwort,
+      options: { captchaToken },
+    })
+    const code = error ? authFehler(error) : null
+    return { falsch: code === 'anmeldung_falsch', wert: code }
   })
 
-  if (error) {
-    const code = authFehler(error)
-    if (code !== 'anmeldung_falsch') return fehler(code)
-    await fehlversuchZaehlen(email, 'passwort')
-    return { ok: false, code, meldung: 'Das aktuelle Passwort ist falsch.' }
+  if (versuch.gesperrt) return { ergebnis: gesperrt(versuch.gesperrtBis) }
+  if (versuch.wert === 'anmeldung_falsch') {
+    return {
+      ergebnis: { ok: false, code: 'anmeldung_falsch', meldung: 'Das aktuelle Passwort ist falsch.' },
+    }
   }
+  if (versuch.wert) return { ergebnis: fehler(versuch.wert) }
+  return { ergebnis: null, einmal }
+}
 
-  // The check created a real session: end it again. A failure here changes nothing.
+/** Ends a throw-away session. A failure here changes nothing. */
+async function beenden(einmal: Client): Promise<void> {
   await einmal.auth.signOut({ scope: 'local' }).catch(() => undefined)
-  return { ok: true }
 }
 
 /** The user's TOTP factors. Unverified factors only appear in `all`. */
@@ -165,25 +185,23 @@ async function faktorenLesen(supabase: Client) {
   }
 }
 
-/** Checks a TOTP code against the user's verified authenticators; a wrong code counts as an attempt. */
+/** Checks a TOTP code against the user's verified authenticators as one counted attempt. */
 async function codePruefen(supabase: Client, email: string, code: string): Promise<AktionsErgebnis> {
-  const sperre = await gesperrt(email)
-  if (sperre) return sperre
+  const versuch = await alsVersuch(email, 'totp', async () => {
+    const faktoren = await faktorenLesen(supabase)
+    if (faktoren.fehler) return { falsch: false, wert: faktoren.fehler }
 
-  const faktoren = await faktorenLesen(supabase)
-  if (faktoren.fehler) return faktoren.fehler
-
-  let ausfall = false
-  for (const faktor of faktoren.verifiziert) {
-    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: faktor.id, code })
-    if (!error) return { ok: true }
-    if (authFehler(error) === 'dienst_nicht_erreichbar') ausfall = true
-  }
-  // An outage is not a wrong code and must not lock the user out.
-  if (ausfall) return fehler('dienst_nicht_erreichbar')
-
-  await fehlversuchZaehlen(email, 'totp')
-  return fehler('code_falsch')
+    let ausfall = false
+    for (const faktor of faktoren.verifiziert) {
+      const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: faktor.id, code })
+      if (!error) return { falsch: false, wert: { ok: true } }
+      if (authFehler(error) === 'dienst_nicht_erreichbar') ausfall = true
+    }
+    // An outage is not a wrong code and must not lock the user out.
+    if (ausfall) return { falsch: false, wert: fehler('dienst_nicht_erreichbar') }
+    return { falsch: true, wert: fehler('code_falsch') }
+  })
+  return versuch.gesperrt ? gesperrt(versuch.gesperrtBis) : versuch.wert
 }
 
 /** AC-15: sets or clears the display name. Field: `anzeigename`. */
@@ -243,14 +261,19 @@ export async function passwortAendern(
     })
     if (!eingabe.success) return eingabeFehler(eingabe.error)
 
-    const pruefung = await passwortPruefen(
+    const anmeldung = await frischAnmelden(
       email,
       eingabe.data.aktuellesPasswort,
       feld(formData, 'captchaToken'),
     )
-    if (!pruefung.ok) return pruefung
+    if (anmeldung.ergebnis) return anmeldung.ergebnis
+    await beenden(anmeldung.einmal)
 
-    const { error } = await supabase.auth.updateUser({ password: eingabe.data.passwort })
+    // BUG-3: with "require current password" switched on, Supabase itself demands it as well.
+    const { error } = await supabase.auth.updateUser({
+      password: eingabe.data.passwort,
+      current_password: eingabe.data.aktuellesPasswort,
+    })
     if (error) {
       if (error.code === 'same_password') {
         return {
@@ -379,18 +402,26 @@ export async function kontoLoeschen(
     })
     if (!eingabe.success) return eingabeFehler(eingabe.error)
 
-    const pruefung = await passwortPruefen(email, eingabe.data.passwort, feld(formData, 'captchaToken'))
-    if (!pruefung.ok) return pruefung
+    const anmeldung = await frischAnmelden(email, eingabe.data.passwort, feld(formData, 'captchaToken'))
+    if (anmeldung.ergebnis) return anmeldung.ergebnis
 
-    const faktoren = await faktorenLesen(supabase)
-    if (faktoren.fehler) return faktoren.fehler
-    if (faktoren.verifiziert.length > 0) {
-      if (!eingabe.data.code) return { ok: false, code: 'eingabe', feldFehler: { code: CODE_FEHLT } }
-      const codePruefung = await codePruefen(supabase, email, eingabe.data.code)
-      if (!codePruefung.ok) return codePruefung
+    // BUG-3: the database only deletes through a session that was just created with the
+    // password (and, with 2FA, a fresh code) - so the whole check runs on that session.
+    const { einmal } = anmeldung
+    try {
+      const faktoren = await faktorenLesen(einmal)
+      if (faktoren.fehler) return faktoren.fehler
+      if (faktoren.verifiziert.length > 0) {
+        if (!eingabe.data.code) return { ok: false, code: 'eingabe', feldFehler: { code: CODE_FEHLT } }
+        const codePruefung = await codePruefen(einmal, email, eingabe.data.code)
+        if (!codePruefung.ok) return codePruefung
+      }
+
+      await eigenesKontoLoeschen(einmal)
+    } finally {
+      // After a deletion this fails harmlessly: the session is gone with the account.
+      await beenden(einmal)
     }
-
-    await eigenesKontoLoeschen()
 
     // The account is gone: clearing the session cookies is best effort.
     await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined)
