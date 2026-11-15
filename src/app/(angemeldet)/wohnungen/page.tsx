@@ -1,16 +1,14 @@
 import type { Metadata } from 'next'
-import { Window } from '@/components/retro/window'
+import { InhaltHinweis } from '@/components/rahmen/inhalt-meldungen'
+import { tabTitel } from '@/components/rahmen/navigation.rules'
 
-export const metadata: Metadata = { title: 'WohnWerk – Wohnungen' }
+export const metadata: Metadata = { title: tabTitel('wohnungen') }
 
-// Placeholder until PROJ-2 (frame) and PROJ-3 (apartments) replace it.
+// Start page of the frame (PROJ-2 AC-5). Placeholder until PROJ-3 builds the apartments.
 export default function WohnungenSeite() {
   return (
-    <Window title="WohnWerk – Wohnungen" className="md:mx-auto md:max-w-3xl">
-      <div className="text-muted-foreground">
-        <p>Noch keine Wohnungen erfasst.</p>
-        <p className="mt-1">Die Wohnungsverwaltung folgt in einem späteren Schritt.</p>
-      </div>
-    </Window>
+    <InhaltHinweis>
+      <p>Die Wohnungsverwaltung folgt mit dem nächsten Ausbau.</p>
+    </InhaltHinweis>
   )
 }

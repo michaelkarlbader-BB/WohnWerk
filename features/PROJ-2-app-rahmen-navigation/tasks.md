@@ -42,8 +42,8 @@ Pfade ohne Präfix liegen unter `src/components/rahmen/`; Routen in `(angemeldet
 
 ## Ebene 5 — Zusammenbau
 
-- [ ] T17 [P]  Angemeldetes Layout: liest auf dem Server Anzeigename/E-Mail, Cookie „Maximiert“ und `package.json`-Version; reicht Abmelden-Action hinein; legt Rahmen-Kontext, Programmfenster und Wächter um alle Bereiche (lädt keine Bereichsdaten); ersetzt PROJ-1-Statuszeile; Übergangsseite „Wohnungen“ („Die Wohnungsverwaltung folgt mit dem nächsten Ausbau.“)  · files: src/app/(angemeldet)/layout.tsx, src/app/(angemeldet)/wohnungen/page.tsx  · → AC-1, AC-4, AC-5, AC-8, AC-15, AC-16, AC-21, AC-34
-- [ ] T18 [P]  Testseite nur für Browser-Tests (in Produktion „nicht gefunden“): wirft auf Wunsch einen Fehler, meldet Aktionen, Laden, Bestätigung und „ungespeichert“  · files: src/app/(angemeldet)/rahmen-test/page.tsx  · → AC-13, AC-17, AC-27, AC-32
+- [x] T17 [P]  Angemeldetes Layout: liest auf dem Server Anzeigename/E-Mail, Cookie „Maximiert“ und `package.json`-Version; reicht Abmelden-Action hinein; legt Rahmen-Kontext, Programmfenster und Wächter um alle Bereiche (lädt keine Bereichsdaten); ersetzt PROJ-1-Statuszeile; Übergangsseite „Wohnungen“ („Die Wohnungsverwaltung folgt mit dem nächsten Ausbau.“)  · files: src/app/(angemeldet)/layout.tsx, src/app/(angemeldet)/wohnungen/page.tsx  · → AC-1, AC-4, AC-5, AC-8, AC-15, AC-16, AC-21, AC-34
+- [x] T18 [P]  Testseite nur für Browser-Tests (in Produktion „nicht gefunden“): wirft auf Wunsch einen Fehler, meldet Aktionen, Laden, Bestätigung und „ungespeichert“  · files: src/app/(angemeldet)/rahmen-test/page.tsx  · → AC-13, AC-17, AC-27, AC-32
 
 ## Ebene 6 — Browser-Tests (Playwright)
 

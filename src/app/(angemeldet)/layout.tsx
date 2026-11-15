@@ -1,10 +1,15 @@
 import type { ReactNode } from 'react'
-import Link from 'next/link'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { AbmeldenKnopf } from '@/features/konto/components/abmelden-knopf'
+import { Programmfenster } from '@/components/rahmen/programmfenster'
+import { RahmenKontext } from '@/components/rahmen/rahmen-kontext'
+import { FENSTER_COOKIE, istMaximiert } from '@/components/rahmen/rahmen.rules'
+import { UngespeichertWaechter } from '@/components/rahmen/ungespeichert-waechter'
+import { abmelden } from '@/features/konto/auth.actions'
 import { Sitzungswaechter } from '@/features/konto/components/sitzungswaechter'
 import { profilLesen } from '@/features/konto/konto.data'
 import { createClient } from '@/lib/supabase/server'
+import paket from '../../../package.json'
 
 /** E-mail of the signed-in user, or null. Fails closed: any error counts as signed out. */
 async function angemeldeteEmail(): Promise<{ email: string } | null> {
@@ -27,32 +32,33 @@ async function anzeigename(): Promise<string | null> {
   }
 }
 
-const LINK = 'inline-flex min-h-11 items-center underline md:min-h-0'
+/** "Maximised" as chosen on this device; only the exact cookie value counts. */
+async function fensterMaximiert(): Promise<boolean> {
+  try {
+    return istMaximiert((await cookies()).get(FENSTER_COOKIE)?.value)
+  } catch {
+    return false
+  }
+}
 
-// Minimal signed-in frame of PROJ-1; PROJ-2 replaces it with the program window.
+// The frame around all signed-in pages (PROJ-2, docs/app-shell.md). It is drawn on the server
+// and loads no data of any area - only who is signed in and how the window is shown.
 export default async function AngemeldetLayout({ children }: { children: ReactNode }) {
   // Defence in depth: the proxy already redirects signed-out visitors.
-  const nutzer = await angemeldeteEmail()
+  const [nutzer, name, maximiert] = await Promise.all([
+    angemeldeteEmail(),
+    anzeigename(),
+    fensterMaximiert(),
+  ])
   if (!nutzer) redirect('/anmelden')
 
-  const name = (await anzeigename()) ?? nutzer.email
-
   return (
-    <div className="flex min-h-dvh flex-col">
+    <RahmenKontext abmelden={abmelden}>
       <Sitzungswaechter />
-      <main className="flex-1 md:p-4">{children}</main>
-      <footer className="edge-sunken flex flex-wrap items-center justify-between gap-x-4 gap-y-1 bg-background px-2 py-1 text-sm text-muted-foreground">
-        <p className="min-w-0 break-words">Angemeldet: {name}</p>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <Link href="/konto" className={LINK}>
-            Konto
-          </Link>
-          <Link href="/wohnungen" className={LINK}>
-            Wohnungen
-          </Link>
-          <AbmeldenKnopf />
-        </div>
-      </footer>
-    </div>
+      <Programmfenster maximiertStart={maximiert} nutzer={name ?? nutzer.email} version={paket.version}>
+        {children}
+      </Programmfenster>
+      <UngespeichertWaechter />
+    </RahmenKontext>
   )
 }
