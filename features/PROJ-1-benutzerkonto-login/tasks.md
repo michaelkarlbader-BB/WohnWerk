@@ -47,14 +47,14 @@ Pfade ohne Präfix unter `components/` bedeuten `src/features/konto/components/`
 
 ## Ebene 4 — Oberfläche
 
-- [ ] T25 [P]  Fenster „Anmelden“ inkl. 2FA-Schritt, „Bestätigungs-E-Mail erneut senden“, Fußzeile Datenschutz/Impressum; Layout der abgemeldeten Arbeitsfläche  · files: src/features/konto/components/anmelden-form.tsx, src/app/(abgemeldet)/layout.tsx, src/app/(abgemeldet)/anmelden/page.tsx  · → AC-5, AC-6, AC-8, AC-13, AC-22, AC-23, AC-25, EC-1, EC-6
-- [ ] T26 [P]  Fenster „Registrieren“  · files: src/features/konto/components/registrieren-form.tsx, src/app/(abgemeldet)/registrieren/page.tsx  · → AC-1, AC-2, AC-3, AC-23, AC-24, EC-6
-- [ ] T27 [P]  Fenster „Passwort vergessen“, „Neues Passwort setzen“ und Meldungsfenster für Link-Fehler  · files: src/features/konto/components/passwort-vergessen-form.tsx, src/features/konto/components/passwort-neu-form.tsx, src/app/(abgemeldet)/passwort-vergessen/page.tsx, src/app/(abgemeldet)/passwort-neu/page.tsx, src/app/(abgemeldet)/link-ungueltig/page.tsx  · → AC-3, AC-11, AC-23, EC-2
-- [ ] T28 [P]  Angemeldeter Bereich: Layout mit kleiner Statuszeile (Anzeigename bzw. E-Mail), Sitzungswächter (Inaktivität, Abmeldung in anderen Tabs), Platzhalter „Wohnungen“, Weiterleitung von `/`  · files: src/app/(angemeldet)/layout.tsx, src/features/konto/components/sitzungswaechter.tsx, src/app/(angemeldet)/wohnungen/page.tsx, src/app/page.tsx  · → AC-4, AC-5, AC-7, AC-15, EC-3, EC-4
-- [ ] T29 [P]  Registerkarte „Allgemein“ (E-Mail, Anzeigename, angelegt am, 2FA-Status; Anzeigename/E-Mail ändern)  · files: src/features/konto/components/konto-allgemein.tsx  · → AC-15, AC-17, AC-18, EC-8
-- [ ] T30 [P]  Registerkarte „Sicherheit“ (Passwort ändern, 2FA einrichten/zweiter Authenticator/ausschalten, Abmelden, überall abmelden)  · files: src/features/konto/components/konto-sicherheit.tsx, src/features/konto/components/zwei-faktor.tsx  · → AC-9, AC-10, AC-12, AC-14, AC-16, AC-27
-- [ ] T31 [P]  Registerkarte „Konto löschen“  · files: src/features/konto/components/konto-loeschen.tsx  · → AC-19, AC-20, EC-6
-- [ ] T32 [P]  Seiten Datenschutz und Impressum (Platzhaltertext)  · files: src/app/datenschutz/page.tsx, src/app/impressum/page.tsx  · → AC-25
+- [x] T25 [P]  Fenster „Anmelden“ inkl. 2FA-Schritt, „Bestätigungs-E-Mail erneut senden“, Fußzeile Datenschutz/Impressum; Layout der abgemeldeten Arbeitsfläche  · files: src/features/konto/components/anmelden-form.tsx, src/app/(abgemeldet)/layout.tsx, src/app/(abgemeldet)/anmelden/page.tsx  · → AC-5, AC-6, AC-8, AC-13, AC-22, AC-23, AC-25, EC-1, EC-6
+- [x] T26 [P]  Fenster „Registrieren“  · files: src/features/konto/components/registrieren-form.tsx, src/app/(abgemeldet)/registrieren/page.tsx  · → AC-1, AC-2, AC-3, AC-23, AC-24, EC-6
+- [x] T27 [P]  Fenster „Passwort vergessen“, „Neues Passwort setzen“ und Meldungsfenster für Link-Fehler  · files: src/features/konto/components/passwort-vergessen-form.tsx, src/features/konto/components/passwort-neu-form.tsx, src/app/(abgemeldet)/passwort-vergessen/page.tsx, src/app/(abgemeldet)/passwort-neu/page.tsx, src/app/(abgemeldet)/link-ungueltig/page.tsx  · → AC-3, AC-11, AC-23, EC-2
+- [x] T28 [P]  Angemeldeter Bereich: Layout mit kleiner Statuszeile (Anzeigename bzw. E-Mail), Sitzungswächter (Inaktivität, Abmeldung in anderen Tabs), Platzhalter „Wohnungen“, Weiterleitung von `/`  · files: src/app/(angemeldet)/layout.tsx, src/features/konto/components/sitzungswaechter.tsx, src/app/(angemeldet)/wohnungen/page.tsx, src/app/page.tsx  · → AC-4, AC-5, AC-7, AC-15, EC-3, EC-4
+- [x] T29 [P]  Registerkarte „Allgemein“ (E-Mail, Anzeigename, angelegt am, 2FA-Status; Anzeigename/E-Mail ändern)  · files: src/features/konto/components/konto-allgemein.tsx  · → AC-15, AC-17, AC-18, EC-8
+- [x] T30 [P]  Registerkarte „Sicherheit“ (Passwort ändern, 2FA einrichten/zweiter Authenticator/ausschalten, Abmelden, überall abmelden)  · files: src/features/konto/components/konto-sicherheit.tsx, src/features/konto/components/zwei-faktor.tsx  · → AC-9, AC-10, AC-12, AC-14, AC-16, AC-27
+- [x] T31 [P]  Registerkarte „Konto löschen“  · files: src/features/konto/components/konto-loeschen.tsx  · → AC-19, AC-20, EC-6
+- [x] T32 [P]  Seiten Datenschutz und Impressum (Platzhaltertext)  · files: src/app/datenschutz/page.tsx, src/app/impressum/page.tsx  · → AC-25
 
 ## Ebene 5 — Zusammenbau und Go-live
 
