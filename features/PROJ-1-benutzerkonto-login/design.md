@@ -214,3 +214,15 @@ Die Rate-Limits von Supabase (Authentication → Rate Limits) bleiben auf den St
 
 - [ ] Ist der „Before User Created"-Hook im Free-Tarif verfügbar? Falls nicht: Trigger-Variante (siehe Entscheidungen) – klärt `/build` beim Einrichten.
 - [ ] Inhalt von Datenschutzerklärung und Impressum – liefert der Betreiber (Generator oder Anwalt) vor dem ersten `/deploy`.
+
+## Umsetzungsnotizen (`/build`, 2026-11-14/15)
+
+- **Freigabeliste doppelt abgesichert:** Neben dem „Before User Created“-Hook erzwingt ein Trigger beim Anlegen eines Kontos die Freigabe. Ohne Freigabe entsteht so auch dann kein Konto, wenn der Hook im Dashboard nicht eingeschaltet ist.
+- **CAPTCHA auch bei „Passwort ändern“ und „Konto löschen“:** Die Prüfung des aktuellen Passworts ist eine Anmeldung bei Supabase und verlangt bei eingeschaltetem CAPTCHA ein Token. Beide Formulare tragen deshalb ein CAPTCHA-Feld.
+- **„Neues Passwort setzen“ mit 2FA:** Die Action verlangt bei eingerichteter 2FA zusätzlich einen Code, bevor sie das Passwort setzt. Gegen echte Konten noch nicht geprüft.
+- **Mailvorlagen im Free-Tarif:** Supabase lehnt eigene Vorlagen ohne eigenen SMTP-Versand ab (`entitlement_required: auth.email_templates`). Die Vorlagen-Abschnitte in `supabase/config.toml` sind deshalb auskommentiert. Die Route `/auth/bestaetigen` erwartet die Links aus den eigenen Vorlagen (`token_hash` + `type`); mit den Standardvorlagen funktionieren Bestätigung, Passwort-Reset und E-Mail-Wechsel nicht. Offen: Brevo-SMTP schon im Dev-Projekt eintragen (T34 vorziehen) oder die Route zusätzlich auf die Standard-Links auslegen.
+- **Sperre von außen auslösbar:** `login_fehlversuch_zaehlen` ist mit dem öffentlichen Schlüssel ohne CAPTCHA aufrufbar. Wer eine E-Mail-Adresse kennt, kann deren Anmeldung alle 15 Minuten erneut sperren. Folge der Entscheidung „kein Admin-Schlüssel in der App“; kein Zugriff auf Daten.
+- **Angemeldete Nutzer** auf `/anmelden` oder `/registrieren` werden nach `/wohnungen` geleitet.
+- **Datenbank geprüft:** 33 zurückgerollte SQL-Prüfungen gegen das Dev-Projekt (Freigabe, RLS mit zwei Konten, 2FA-Stufe, Sperre, Kontolöschung, 7-Tage-Aufräumen) bestanden am 2026-11-14.
+- **Lint-Warnungen, bewusst nicht unterdrückt:** `window.location.assign` im Sitzungswächter (volle Navigation ist gewollt, damit der Proxy entscheidet) und `<img>` für den QR-Code (fertige Data-URI von Supabase).
+- **Design-System-Werte unter 4,5:1, nicht geändert:** Titelleisten-Verlaufsende im Dunkelmodus (3,54:1), „Positiv“ auf Fensterfläche im Hellmodus (4,27:1).
