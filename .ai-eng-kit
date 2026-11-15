@@ -14,7 +14,7 @@
     "test": "vitest",
     "e2e": "playwright",
     "ui": "shadcn",
-    "deploy": null,
+    "deploy": "vercel",
     "packageManager": "npm"
   },
   "commands": {

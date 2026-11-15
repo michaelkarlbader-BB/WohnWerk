@@ -33,7 +33,7 @@ Bewusst **später**: Kontoauszug-Abruf mit (möglichst automatischer) Buchungszu
 - **Backend:** Supabase (Datenbank, Login), Benutzerkonten ab dem ersten Feature.
 - Environment strategy: two-projects
 - Data region: eu-central-1 (Frankfurt) für Produktion; Dev-Projekt in eu-west-2 (London), nur Testdaten (entschieden 2026-11-14, UK-Angemessenheitsbeschluss)
-- Hosting: Vercel (vorläufig, wird bei `/deploy` bestätigt)
+- Hosting: Vercel Hobby, ohne AVV (bestätigt 2026-11-15 bei `/deploy`; Vercel Pro vor dem Angebot an Dritte)
 - Domain: wohnwerk-mb.de (vorhanden, erfasst 2026-11-14; Produktiv-Adresse und Absender-Domain für Mails)
 - Testumgebung: test.wohnwerk-mb.de (Dev/QA; nutzt das Supabase-Dev-Projekt mit Testdaten, nie Live-Daten; wird bei `/deploy` als Vercel-Umgebung eingerichtet, ohne Suchmaschinen-Indexierung)
 - Data protection law: GDPR (EU/DE)
