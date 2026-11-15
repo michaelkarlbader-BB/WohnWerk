@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRahmen, useRahmenVorAbmelden } from '@/components/rahmen/rahmen-kontext'
 import { aktivitaetMelden } from '../auth.actions'
 import { AKTIVITAET_MELDE_INTERVALL_MS, INAKTIVITAET_MAX_MS } from '../konto.rules'
 
@@ -38,6 +39,10 @@ export function meldeAbmeldung(): void {
 
 /** Invisible: ends the visit after 30 minutes without activity (AC-7) or a sign-out in another tab (EC-4). */
 export function Sitzungswaechter() {
+  const { ohneRueckfrageVerlassen } = useRahmen()
+  // The sign-out from the frame's menu tells the other tabs as well (EC-4).
+  useRahmenVorAbmelden(meldeAbmeldung)
+
   useEffect(() => {
     // The request that rendered this page already refreshed the activity cookie.
     let letzteAktivitaet = Date.now()
@@ -48,6 +53,8 @@ export function Sitzungswaechter() {
     function verlassen() {
       if (beendet) return
       beendet = true
+      // The automatic sign-out never asks about unsaved changes (PROJ-2 EC-3).
+      ohneRueckfrageVerlassen()
       // Full navigation, so the proxy decides. Only path + query go into `weiter`.
       const { pathname, search } = window.location
       window.location.assign('/anmelden?weiter=' + encodeURIComponent(pathname + search))
@@ -109,7 +116,7 @@ export function Sitzungswaechter() {
         if (kanal === eigenerKanal) kanal = null
       }
     }
-  }, [])
+  }, [ohneRueckfrageVerlassen])
 
   return null
 }

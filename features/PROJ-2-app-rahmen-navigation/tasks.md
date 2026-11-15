@@ -36,9 +36,9 @@ Pfade ohne Präfix liegen unter `src/components/rahmen/`; Routen in `(angemeldet
 
 ## Ebene 4 — Fenster, Inhaltsrouten, PROJ-1-Anpassungen
 
-- [ ] T14 [P]  Programmfenster: Desktop mit Arbeitsfläche, maximiert bzw. Handy bildschirmfüllend nur über CSS-Breakpoint `md` (Inhalt einmal gezeichnet), Maximieren setzt/löscht Cookie `wohnwerk-fenster` ohne Neuladen (Fehler beim Speichern still), nur der Inhalt scrollt + Test  · files: src/components/rahmen/programmfenster.tsx, src/components/rahmen/programmfenster.test.tsx  · → AC-1, AC-2, AC-3, AC-24, EC-4, EC-7
-- [ ] T15 [P]  Inhaltsrouten: Ladezustand, Fehlergrenze (Erneut versuchen lädt Bereich neu), Nicht-gefunden, Auffang-Route, letzte Auffanglinie `global-error`  · files: src/app/(angemeldet)/loading.tsx, src/app/(angemeldet)/error.tsx, src/app/(angemeldet)/not-found.tsx, src/app/(angemeldet)/[...pfad]/page.tsx, src/app/global-error.tsx  · → AC-10, AC-23, AC-32, AC-35, EC-2
-- [ ] T16 [P]  PROJ-1-Anpassungen: Kontoseite in Variante „eingebettet“ (Titel „WohnWerk – Konto“ vom Rahmen); Sitzungswächter ruft vor automatischer Abmeldung „ohne Rückfrage verlassen“  · files: src/features/konto/components/konto-fenster.tsx, src/app/(angemeldet)/konto/page.tsx, src/features/konto/components/sitzungswaechter.tsx  · → AC-14, EC-3
+- [x] T14 [P]  Programmfenster: Desktop mit Arbeitsfläche, maximiert bzw. Handy bildschirmfüllend nur über CSS-Breakpoint `md` (Inhalt einmal gezeichnet), Maximieren setzt/löscht Cookie `wohnwerk-fenster` ohne Neuladen (Fehler beim Speichern still), nur der Inhalt scrollt + Test  · files: src/components/rahmen/programmfenster.tsx, src/components/rahmen/programmfenster.test.tsx  · → AC-1, AC-2, AC-3, AC-24, EC-4, EC-7
+- [x] T15 [P]  Inhaltsrouten: Ladezustand, Fehlergrenze (Erneut versuchen lädt Bereich neu), Nicht-gefunden, Auffang-Route, letzte Auffanglinie `global-error`  · files: src/app/(angemeldet)/loading.tsx, src/app/(angemeldet)/error.tsx, src/app/(angemeldet)/not-found.tsx, src/app/(angemeldet)/[...pfad]/page.tsx, src/app/global-error.tsx  · → AC-10, AC-23, AC-32, AC-35, EC-2
+- [x] T16 [P]  PROJ-1-Anpassungen: Kontoseite in Variante „eingebettet“ (Titel „WohnWerk – Konto“ vom Rahmen); Sitzungswächter ruft vor automatischer Abmeldung „ohne Rückfrage verlassen“  · files: src/features/konto/components/konto-fenster.tsx, src/app/(angemeldet)/konto/page.tsx, src/features/konto/components/sitzungswaechter.tsx  · → AC-14, EC-3
 
 ## Ebene 5 — Zusammenbau
 

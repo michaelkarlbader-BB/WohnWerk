@@ -16,13 +16,21 @@ type KontoFensterProps = {
   zweiFaktorAnzahl: number
 }
 
-/** Account window with its three tabs; confirmations of all tabs go to the status line. */
+/**
+ * Account page with its three tabs, embedded in the program window: the frame's title bar
+ * names it (PROJ-2 AC-14). Confirmations of all tabs go to the status line of the page.
+ */
 export function KontoFenster({ email, anzeigename, angelegtAm, zweiFaktorAnzahl }: KontoFensterProps) {
   const [status, setStatus] = useState('')
   const zweiFaktorAktiv = zweiFaktorAnzahl > 0
 
   return (
-    <Window title="WohnWerk – Konto" statusText={status} className="md:mx-auto md:max-w-3xl">
+    <Window
+      title="Konto"
+      variante="eingebettet"
+      statusText={status}
+      className="gap-3 p-3 md:max-w-3xl md:p-4"
+    >
       {/* A new tab starts with an empty status line. */}
       <Tabs defaultValue="allgemein" onValueChange={() => setStatus('')}>
         <TabsList>

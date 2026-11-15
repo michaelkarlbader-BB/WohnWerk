@@ -1,10 +1,21 @@
 import { act, render } from '@testing-library/react'
+import { useEffect } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AKTIVITAET_MELDE_INTERVALL_MS, INAKTIVITAET_MAX_MS } from '../konto.rules'
+import {
+  RahmenKontext,
+  useRahmenBereich,
+  useRahmenZustand,
+  type RahmenZustand,
+} from '@/components/rahmen/rahmen-kontext'
 import { Sitzungswaechter, meldeAbmeldung } from './sitzungswaechter'
 
 const aktivitaetMelden = vi.hoisted(() => vi.fn())
 vi.mock('../auth.actions', () => ({ aktivitaetMelden }))
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/wohnungen',
+  useRouter: () => ({ push: vi.fn() }),
+}))
 
 const MINUTE = 60_000
 const ZIEL = '/anmelden?weiter=' + encodeURIComponent('/wohnungen?seite=2&q=a b')
@@ -210,6 +221,60 @@ describe('Sitzungswaechter', () => {
     vi.advanceTimersByTime(INAKTIVITAET_MAX_MS)
 
     expect(aktivitaetMelden).not.toHaveBeenCalled()
+    expect(assign).not.toHaveBeenCalled()
+  })
+})
+
+// PROJ-2: inside the program window the guard works together with the frame.
+describe('Sitzungswaechter im Rahmen', () => {
+  let zustand: RahmenZustand
+  const abmelden = vi.fn<() => Promise<void>>()
+
+  function Seite() {
+    useRahmenBereich({ ungespeichert: true })
+    const aktuell = useRahmenZustand()
+    useEffect(() => {
+      zustand = aktuell
+    })
+    return null
+  }
+
+  function aufbauen() {
+    abmelden.mockReset().mockResolvedValue(undefined)
+    render(
+      <RahmenKontext abmelden={abmelden}>
+        <Seite />
+        <Sitzungswaechter />
+      </RahmenKontext>
+    )
+  }
+
+  it('leaves without asking about unsaved changes when the visit ends automatically (EC-3)', () => {
+    aufbauen()
+    expect(zustand.istUngespeichert()).toBe(true)
+    let ungespeichertBeimVerlassen: boolean | undefined
+    assign.mockImplementation(() => {
+      ungespeichertBeimVerlassen = zustand.istUngespeichert()
+    })
+
+    vi.advanceTimersByTime(INAKTIVITAET_MAX_MS)
+
+    expect(assign).toHaveBeenCalledTimes(1)
+    expect(ungespeichertBeimVerlassen).toBe(false)
+  })
+
+  it('tells the other tabs when the frame signs out (EC-4)', async () => {
+    aufbauen()
+    act(() => zustand.rueckfrageBeantworten(true)) // nothing open: no effect
+    const andererTab = new FakeKanal('ww-sitzung')
+    const empfangen = vi.fn()
+    andererTab.addEventListener('message', (e) => empfangen((e as MessageEvent).data))
+
+    act(() => zustand.abmelden())
+    await act(async () => zustand.rueckfrageBeantworten(true)) // "Verwerfen"
+
+    expect(empfangen).toHaveBeenCalledExactlyOnceWith('abgemeldet')
+    expect(abmelden).toHaveBeenCalledTimes(1)
     expect(assign).not.toHaveBeenCalled()
   })
 })
