@@ -331,6 +331,40 @@ describe('istFrischeWiederherstellung (BUG-1)', () => {
   })
 })
 
+// QA re-verification 2026-11-15: exact boundaries of the recovery window.
+describe('istFrischeWiederherstellung – Grenzen (QA)', () => {
+  const jetztSek = 1_800_000_000
+  const jetztMs = jetztSek * 1000
+
+  it('accepts exactly 15 minutes and rejects one second more', () => {
+    expect(istFrischeWiederherstellung([{ method: 'recovery', timestamp: jetztSek - 900 }], jetztMs)).toBe(true)
+    expect(istFrischeWiederherstellung([{ method: 'recovery', timestamp: jetztSek - 901 }], jetztMs)).toBe(false)
+  })
+
+  it('tolerates 60 seconds of clock skew into the future, not 61', () => {
+    expect(istFrischeWiederherstellung([{ method: 'recovery', timestamp: jetztSek + 60 }], jetztMs)).toBe(true)
+    expect(istFrischeWiederherstellung([{ method: 'recovery', timestamp: jetztSek + 61 }], jetztMs)).toBe(false)
+  })
+
+  it.each([
+    ['NaN', Number.NaN],
+    ['Infinity', Number.POSITIVE_INFINITY],
+  ])('rejects a %s timestamp', (_name, timestamp) => {
+    expect(istFrischeWiederherstellung([{ method: 'recovery', timestamp }], jetztMs)).toBe(false)
+  })
+
+  it.each(['magiclink', 'email/signup', 'invite', 'email_change', 'oauth', 'RECOVERY'])(
+    'rejects the link method %s',
+    (method) => {
+      expect(istFrischeWiederherstellung([{ method, timestamp: jetztSek }], jetztMs)).toBe(false)
+    },
+  )
+
+  it('rejects null entries without throwing', () => {
+    expect(istFrischeWiederherstellung([null, 'recovery', 42], jetztMs)).toBe(false)
+  })
+})
+
 describe('verraetKonto (BUG-2)', () => {
   it('flags the resend limit that only existing accounts hit', () => {
     expect(verraetKonto({ code: 'over_email_send_rate_limit' })).toBe(true)

@@ -108,6 +108,28 @@ describe('vorhandenesPasswortSchema', () => {
   })
 })
 
+// QA re-verification 2026-11-15: byte limit at its exact edge (BUG-12).
+describe('Passwort-Bytegrenze (QA)', () => {
+  it('counts a 4-byte emoji four times', () => {
+    // 18 × 4 bytes = 72 bytes (accepted), 19 × 4 = 76 bytes (rejected)
+    expect(passwortSchema.safeParse('😀'.repeat(18)).success).toBe(true)
+    expect(passwortSchema.safeParse('😀'.repeat(19)).success).toBe(false)
+  })
+
+  it('accepts exactly 72 bytes of mixed text and rejects 73', () => {
+    const genau72 = 'ä'.repeat(30) + 'a'.repeat(12) // 60 + 12 bytes
+    expect(passwortSchema.safeParse(genau72).success).toBe(true)
+    expect(passwortSchema.safeParse(genau72 + 'a').success).toBe(false)
+    expect(vorhandenesPasswortSchema.safeParse(genau72).success).toBe(true)
+    expect(vorhandenesPasswortSchema.safeParse(genau72 + 'a').success).toBe(false)
+  })
+
+  it('still demands 12 characters, not 12 bytes', () => {
+    // 6 umlauts = 12 bytes but only 6 characters
+    expect(passwortSchema.safeParse('ä'.repeat(6)).success).toBe(false)
+  })
+})
+
 describe('anzeigenameSchema', () => {
   it('macht aus leerem Text null', () => {
     expect(anzeigenameSchema.parse('')).toBeNull()
