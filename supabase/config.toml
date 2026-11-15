@@ -250,20 +250,19 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# PROJ-1: deutsche Mailvorlagen (AC-28).
-# Im Free-Tarif nur mit eigenem SMTP-Versand erlaubt ("entitlement_required: auth.email_templates").
-# Erst einkommentieren, wenn im Projekt ein SMTP-Anbieter (Brevo) eingetragen ist – tasks.md T20/T34.
-# [auth.email.template.confirmation]
-# subject = "WohnWerk – Bitte bestätige deine E-Mail-Adresse"
-# content_path = "./supabase/templates/bestaetigen.html"
+# PROJ-1: deutsche Mailvorlagen (AC-28). Im Free-Tarif nur mit eigenem SMTP-Versand erlaubt;
+# das Dev-Projekt versendet über Brevo-SMTP (eingetragen im Dashboard, nicht in dieser Datei).
+[auth.email.template.confirmation]
+subject = "WohnWerk – Bitte bestätige deine E-Mail-Adresse"
+content_path = "./supabase/templates/bestaetigen.html"
 
-# [auth.email.template.recovery]
-# subject = "WohnWerk – Passwort zurücksetzen"
-# content_path = "./supabase/templates/passwort-zuruecksetzen.html"
+[auth.email.template.recovery]
+subject = "WohnWerk – Passwort zurücksetzen"
+content_path = "./supabase/templates/passwort-zuruecksetzen.html"
 
-# [auth.email.template.email_change]
-# subject = "WohnWerk – Neue E-Mail-Adresse bestätigen"
-# content_path = "./supabase/templates/email-aendern.html"
+[auth.email.template.email_change]
+subject = "WohnWerk – Neue E-Mail-Adresse bestätigen"
+content_path = "./supabase/templates/email-aendern.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
