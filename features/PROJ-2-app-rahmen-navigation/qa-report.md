@@ -1,5 +1,40 @@
 # QA-Bericht – PROJ-2: App-Rahmen & Navigation
 
+## Nachprüfung 2026-11-16 (3. Lauf) · Branch `feat/PROJ-2-app-rahmen-navigation` @ `9889f65`
+
+- **Umfang:** `git diff --stat bd84bed..HEAD` → 10 Dateien. Produktivdateien: `src/components/rahmen/ungespeichert-waechter.tsx`, `src/components/rahmen/verlauf.ts`, `src/features/konto/seite-schuetzen.ts` (neu), `src/app/(angemeldet)/{[...pfad],konto,wohnungen,rahmen-test}/page.tsx`, `rahmen-test/rahmen-test-seite.tsx` (neu). Der Diff berührt die Zugangsprüfung, deshalb wurde in voller Breite geprüft: drei unabhängige `qa-engineer`-Lanes ohne Kenntnis des Builds; Zusammenführung durch den Owner.
+- **Testsuite (einmal, vor den Lanes):** `npm test` → 28 Dateien, **636 bestanden, 0 fehlgeschlagen**. Keine Prüfung abgeschwächt: Testdateien ohne entfernte `expect`/`it`; in neuen Zeilen kein `.skip`/`.only`/`eslint-disable`/`ts-ignore`. `npm run typecheck`, `eslint` auf die Diff-Dateien, `npm run check:structure` → 0 Fehler.
+- **Nicht erneut geprüft:** alles aus Lauf 1/2, das der Diff nicht berührt (*unverändert seit 2026-11-16, in diesem Lauf nicht erneut geprüft*). Migrations-Roundtrip: übersprungen (keine Schema-Änderung). Produktions-Build: nicht ausgeführt; nur das vorhandene `.next/`-Artefakt (15:53) geprüft.
+
+### Ergebnis 3. Lauf
+
+| | |
+|---|---|
+| BUG-1 (High) | **geschlossen** – Gegenprobe `scratchpad/probe/qa3-zurueck.test.tsx` (echte jsdom-History): R1, R3, (a), (b), mehrfaches Hin und Her, Rückkehr auf alten Wächter-Eintrag, Schublade → grün; Kontrolllauf gegen `bd84bed` schlägt bei R1/R3 fehl. Wächter vergleicht jetzt eine Eintrags-Kennung (`ungespeichert-waechter.tsx:31,49-52,58,65`, `verlauf.ts:19-22`). Sweep `markeAnlegen(` → 4 Treffer, alle korrekt. |
+| BUG-2 (Medium) | **geschlossen** – jede Seite prüft selbst (`seite-schuetzen.ts:12-24`, fail closed, `redirect` außerhalb `try`). Sweep `find "src/app/(angemeldet)" -name page.tsx \| xargs grep -L seiteSchuetzen` → **0** (vorher 3). RSC-Teilrendering ohne Sitzung auf 11 Pfaden (`/x.png`, `/konto.png`, `/wohnungen.svg`, `/rahmen-test.png`, `/x/y.jpg`, …) → `NEXT_REDIRECT;replace;/anmelden` aus `seiteSchuetzen`, kein Seiteninhalt. Mit echter Sitzung (beide QA-Nutzer): `ww-aktiv` frisch → Seite erreichbar; abgelaufen/fehlend/manipuliert/Zukunft → Redirect; E-Mail in keiner Antwort. |
+| Neue Befunde | BUG-10 (Low), BUG-11 (Medium, bestand schon vor dem Fix), BUG-12 (Low, durch den Fix neu), BUG-13 (Low) – alle **Deferred** (Stoppregel der Nachprüfung) |
+| Empfehlung | **READY** – kein offener Critical/High/Medium-Bug |
+
+**Im Diff erneut geprüft:** AC-27 PASS (Probe, Wege oben), AC-28 PASS (Mechanismus; native Rückfrage [!] NOT VERIFIED), AC-29 PASS (Suite-Tests), AC-25 PASS (`schublade.test.tsx`, Probe), EC-3, EC-8 PASS (Code), AC-4/AC-8 abgemeldet PASS (`curl` → 307 mit `weiter`), AC-5, AC-10/EC-2, AC-14, AC-32, AC-36 PASS über Code und `zugang.test.tsx` (5 Seiten × 5 Fälle, 25/25).
+
+**Sicherheit 3. Lauf (SEC-01, -02, -03, -05, -08):** 7 verifiziert – Auth-Bypass HTML (12 Pfade) und RSC (11 Pfade + Prefetch-Varianten), Inaktivität mit echter Sitzung, `x-middleware-subrequest` (6 Varianten) → 307, Secrets in `.next/static` → 0, `seiteSchuetzen` nicht im Client-Bundle (`server-only`), Open Redirect über `weiter` → `/wohnungen`, `prerender-manifest.json` ohne geschützte Seiten. 6 NOT VERIFIED (siehe unten).
+
+**Regression 3. Lauf:** PROJ-1-Seiten → 200; geschützte Routen → 307 mit `weiter`; Assets 200; Kontoseite und Testseite im Code verhaltensgleich (`git show bd84bed:…`).
+
+**[!] NOT VERIFIED in diesem Lauf:**
+- AAL2 zur Laufzeit – beide QA-Konten ohne 2FA; nur Code (`zugang.ts:24-31,46`) und `zugang.test.tsx`.
+- Echter Browser: Zurück/Vorwärts/Verlaufsmenü am echten App Router, native Rückfrage, Optik, Handy.
+- Angemeldete Darstellung von Kontoseite, Auffangseite und `/wohnungen` (nur RSC-/HTML-Statuscodes mit Sitzung geprüft).
+- Produktions-Server: Testseite als 404, Fehlerantworten ohne Stacktrace.
+- E2E-Suite: nicht ausgeführt.
+- Autorisierung X gegen Y, Rate-Limiting, Injection: der Diff hat weder Datenzugriff noch Endpunkte mit Eingabe.
+
+**Unit-Tests aus diesem Lauf:** keine übernommen. Die Gegenprobe `qa3-zurueck.test.tsx` hat einen Red-Check durchlaufen (alter Wächter: 4 rot, neuer: 3 rot = BUG-11/BUG-12). Wegen dieser beiden offenen Fälle bleibt sie im Scratchpad und kommt beim Fix von BUG-11/12 als Regressionstest mit.
+
+**Hinweis:** Die QA-Passwort-Variablen heißen in `.env.local` `QA_TEST_PASSWORT`/`QA_TEST2_PASSWORT`; `.env.local.example` enthält die QA-Variablen noch nicht (Thema für `scripts/qa-sitzung.mjs`).
+
+---
+
 ## Nachprüfung 2026-11-16 (2. Lauf) · Branch `feat/PROJ-2-app-rahmen-navigation` @ `b1f59e3`
 
 - **Umfang:** `git diff --stat e10eb37..HEAD` → Produktivdateien `src/proxy.ts`, `src/features/konto/zugang.ts` (neu), `src/app/(angemeldet)/layout.tsx`, `src/app/(angemeldet)/konto/page.tsx`, `src/app/globals.css` (Z. 271), `src/components/rahmen/ungespeichert-waechter.tsx`. Weil Proxy/Auth betroffen sind: volle Breite, drei unabhängige `qa-engineer`-Lanes ohne Kenntnis des Builds; Zusammenführung durch den Owner.
@@ -90,7 +125,7 @@
 ## Bugs
 
 ### BUG-1 — Browser-Zurück nach Seitenwechsel oder Speichern verwirft Eingaben ohne Rückfrage
-- **Severity:** High · **Status:** Open (2. Lauf: weiter offen) · **AC:** AC-27
+- **Severity:** High · **Status:** Closed (3. Lauf, Gegenprobe `qa3-zurueck.test.tsx`, Sweep 4 Treffer korrekt) · **AC:** AC-27
 - **Repro:** (a) auf Seite A ändern → speichern → über Bereichsliste nach B → auf B ändern → Browser-Zurück: kein Dialog, Eingaben auf B weg. (b) auf A ändern → Bereichswechsel mit „Verwerfen“ → auf B ändern → Zurück: kein Dialog. Gegenprobe (jsdom-History) `scratchpad/probe/zurueck-nach-wechsel.test.tsx`: 2 failed, Kontrollfall passed.
 - **Ursache:** `ungespeichert-waechter.tsx:43` legt keinen neuen Wächter-Eintrag an, solange `eintragAktiv.current` `true` ist; das Flag wird nur im popstate-Handler (`:52`) zurückgesetzt, nicht bei Pfadwechsel oder Speichern. Zurück landet auf dem veralteten Eintrag von A, `:51` bricht still ab.
 - **Class:** Zustand eines Verlaufs-Wächters (Ref) überlebt Pfadwechsel/Speichern und deckt dann einen fremden Verlaufseintrag ab.
@@ -101,7 +136,7 @@
   - Sweep 2. Lauf: 4 Treffer (`schublade.tsx:58`, `ungespeichert-waechter.tsx:50, 64`, `verlauf.ts:10`).
 
 ### BUG-2 — Adressen mit Bildendung umgehen den Proxy (2FA- und Inaktivitätsprüfung)
-- **Severity:** Medium · **Status:** Open (2. Lauf: teilweise geschlossen) · **Sicherheit:** SEC-03
+- **Severity:** Medium · **Status:** Closed (3. Lauf; Sweep jetzt `… | xargs grep -L seiteSchuetzen` → 0) · **Sicherheit:** SEC-03
 - **Repro:** `curl -i localhost:3000/konto.png` → 307 `/anmelden` **ohne** `weiter` (Layout-Redirect, Proxy lief nicht); `curl -i localhost:3000/konto` → 307 `/anmelden?weiter=%2Fkonto` (Proxy). Gleich für `/wohnungen.svg`, `/x/y.jpg`.
 - **Ursache:** Matcher `src/proxy.ts:106` nimmt `.svg|png|jpg|jpeg|gif|webp` aus; solche Pfade landen in `(angemeldet)/[...pfad]`. Das Layout (`layout.tsx:15-24, 53`) prüft nur `getUser()` – weder AAL2 (`proxy.ts:42-50`) noch Aktivitäts-Cookie (`proxy.ts:67`). Eine Sitzung mit offenem zweitem Faktor oder abgelaufener Inaktivität sieht den Rahmen samt E-Mail. Datensätze heute geschützt durch restriktive RLS (`20261114175034_konto_basis.sql:71`); jede künftige dynamische Route erbt die Lücke. Widerspricht `design.md` („alle Routen … durch die Anfrage-Grenze geschützt“).
 - **Class:** Geschützte Route an der Anfrage-Grenze vorbei erreichbar (Matcher-Ausnahme nach Dateiendung) und Rückfallprüfung im Layout schwächer als der Proxy.
@@ -149,6 +184,30 @@
 - **Severity:** Low · **Status:** Deferred · **Sicherheit:** SEC-03
 - **Befund:** Auf vom Proxy ausgelassenen Pfaden laufen Actions aus `auth.actions.ts` ohne Proxy. `zweiFaktorPruefen` (`auth.actions.ts:194-215`) setzt das Aktivitäts-Cookie, ohne Inaktivität zu prüfen; mit gültigem TOTP-Code ließe sich eine abgelaufene aal1-Sitzung wiederbeleben. `konto.actions.ts:73-83` prüft aal2, aber keine Inaktivität. Nicht mit echter Sitzung nachgestellt (Einschätzung aus Code).
 - **Class:** Server-Actions ohne eigene Zugangsprüfung (verlassen sich auf den Proxy). **Sweep:** `grep -L "istInaktiv\|zugangPruefen" src/features/*/*.actions.ts` → 1 (`konto.actions.ts`), dazu `zweiFaktorPruefen` in `auth.actions.ts`.
+
+### BUG-10 — `crypto.randomUUID()` ohne Rückfallweg im Verlaufs-Wächter (neu, 3. Lauf)
+- **Severity:** Low · **Status:** Deferred
+- **Repro (aus dem Code):** Dev-Server über `http://<LAN-IP>:3000` am Handy öffnen, auf einer Seite mit `ungespeichert` tippen → `crypto.randomUUID is not a function`, Rahmen stürzt ab. HTTPS und localhost sind nicht betroffen. Im Browser [!] NOT VERIFIED.
+- **Class:** Browser-API, die einen sicheren Kontext verlangt, ohne Rückfallweg in gemeinsam genutztem Rahmen-Code.
+- **Sweep:** `grep -rn "randomUUID\|crypto.subtle" src --include=*.ts --include=*.tsx | grep -v "\.test\."` → 1 (`verlauf.ts:20`).
+
+### BUG-11 — Sprung über mehrere Verlaufseinträge oder Vorwärts verlässt die Seite vor der Rückfrage (neu, 3. Lauf)
+- **Severity:** Medium · **Status:** Deferred (in einer Nachprüfung neu gefunden, nicht blockierend; bestand schon vor dem Fix) · **AC:** AC-27
+- **Repro:** (1) A → B → A (Bereichsliste) → ändern → `history.go(-2)` (Verlaufsmenü am Zurück-Knopf) → landet auf `/b`, Dialog erst dort, Eingaben auf A weg. (2) A ändern → B mit „Verwerfen“ → Zurück → A ändern → Vorwärts → `/b`. Probe `qa3-zurueck.test.tsx`: `expected '/b' to be '/a'`; Kontrollfall mit `bd84bed` ebenfalls rot. Workaround: einzelnes Zurück fragt korrekt.
+- **Class:** Der Zurück-Wächter fängt nur den einen Schritt auf den Eintrag direkt darunter ab (Konzept „ein Zusatzeintrag“, `design.md:233`).
+- **Sweep:** `grep -rn "addEventListener('popstate'" src --include=*.ts --include=*.tsx | grep -v "\.test\."` → 3 (`schublade.tsx:62, 90`, `ungespeichert-waechter.tsx:69`).
+
+### BUG-12 — Speichern mit Revalidierung löscht die Kennung des Wächter-Eintrags (neu, 3. Lauf, durch den Fix entstanden)
+- **Severity:** Low · **Status:** Deferred · **AC:** AC-27
+- **Repro (Probe):** A → B → A, ändern, Next ersetzt `history.state` (`replaceState({__NA:true})`, wie bei Server-Action mit `revalidatePath`/`router.refresh`), speichern, ändern, Zurück, „Verwerfen“ → bleibt auf `/a`, erst ein zweites Zurück verlässt die Seite. Kein Datenverlust. Ursache: Next 16 schreibt `history.state` ohne eigene Felder neu (`app-router.js:95-110`, `app-router-state.js:433-438`). Heute latent (nur die Testseite meldet `ungespeichert`), ab PROJ-3 der Normalfall.
+- **Class:** Die Identität des Wächters liegt in `history.state`, das Next.js bei Revalidierung überschreibt.
+- **Sweep:** `grep -rn "revalidatePath\|router.refresh" src --include=*.ts --include=*.tsx | grep -v "\.test\."` → 3 (alle `konto.actions.ts`, keine Seite mit `ungespeichert`).
+
+### BUG-13 — Seitenschutz nur als Konvention: nicht dokumentiert, nicht erzwungen (neu, 3. Lauf)
+- **Severity:** Low · **Status:** Deferred · **Sicherheit:** SEC-03
+- **Befund:** `design.md:262` nennt die Prüfung nur für Proxy, Layout und Kontoseite; `docs/app-shell.md:89` nur `src/proxy.ts`. Die Regel „jede `page.tsx` unter `(angemeldet)` ruft `seiteSchuetzen` auf, weil RSC das Layout überspringt“ steht nirgends. `zugang.test.tsx:54-71` zählt die Seiten von Hand auf; eine neue Seite (z. B. `/wohnungen/[id]` in PROJ-3) ohne Aufruf öffnet den BUG-2-Weg wieder, ohne dass ein Test anschlägt.
+- **Class:** Sicherheitskonvention nur im Code, ohne Doku und ohne automatische Prüfung.
+- **Sweep:** `grep -rn "seiteSchuetzen" features/PROJ-2-app-rahmen-navigation/design.md docs/app-shell.md` → 0; `find "src/app/(angemeldet)" -name page.tsx | xargs grep -L seiteSchuetzen` → 0 (heute alle geschützt).
 
 ## Sicherheit (Red Team)
 
@@ -221,6 +280,8 @@ Nicht ausgeführt. Eine Playwright-Suite existiert (`tests/rahmen-*.spec.ts`), b
 - Kontoseite behält ihre eigene Statuszeile (zwei Statuszeilen unter `/konto`) – laut `design.md:255` bewusst.
 
 ## Entscheidung
+
+**3. Lauf: READY** – BUG-1 und BUG-2 geschlossen, kein offener Critical/High/Medium-Bug. Deferred: BUG-4 bis BUG-13 (außer dem geschlossenen BUG-3). Status → **Approved**. Nicht geprüft und bewusst offen: Browser-Verhalten, angemeldete Darstellung, AAL2 zur Laufzeit, Produktions-Server (siehe oben).
 
 **2. Lauf: NOT READY** – BUG-1 (High, AC-27) ist weiter offen (Rückkehr-Weg). BUG-2 (Medium) bleibt Open für den RSC-Weg. BUG-3 geschlossen. BUG-4 bis BUG-9 Deferred. Status bleibt **In Review**.
 
