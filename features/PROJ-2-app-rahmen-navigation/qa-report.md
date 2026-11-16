@@ -1,5 +1,25 @@
 # QA-Bericht – PROJ-2: App-Rahmen & Navigation
 
+## Nachprüfung 2026-11-16 (2. Lauf) · Branch `feat/PROJ-2-app-rahmen-navigation` @ `b1f59e3`
+
+- **Umfang:** `git diff --stat e10eb37..HEAD` → Produktivdateien `src/proxy.ts`, `src/features/konto/zugang.ts` (neu), `src/app/(angemeldet)/layout.tsx`, `src/app/(angemeldet)/konto/page.tsx`, `src/app/globals.css` (Z. 271), `src/components/rahmen/ungespeichert-waechter.tsx`. Weil Proxy/Auth betroffen sind: volle Breite, drei unabhängige `qa-engineer`-Lanes ohne Kenntnis des Builds; Zusammenführung durch den Owner.
+- **Testsuite (einmal, vor den Lanes):** `npm test` → 28 Dateien, **619 bestanden, 0 fehlgeschlagen**. Prüfdefinitionen nicht abgeschwächt (`git diff e10eb37..HEAD -- '*.test.*' …` → 0 entfernte Zeilen).
+- **Neu: angemeldete Laufzeitprüfung.** Zwei QA-Testnutzer (Dev, Turnstile-Testschlüssel) per einmaligem Playwright-Skript im Scratchpad angemeldet; Zugangsdaten nur von Node aus `.env.local` geladen, nie angezeigt. Beide landeten auf `/wohnungen`.
+- Ergebnisse aus dem 1. Lauf, die der Diff nicht berührt, gelten weiter (*unverändert seit 1. Lauf, nicht erneut geprüft*). Migrations-Roundtrip: übersprungen – Diff ohne Schema-Änderung. Produktions-Build: nicht in diesem Lauf.
+
+### Ergebnis 2. Lauf
+
+| | |
+|---|---|
+| Offene Bugs aus Lauf 1 | BUG-3 **geschlossen**; BUG-1 **weiter offen** (neuer Weg, gleiche Klasse); BUG-2 **teilweise** geschlossen (HTML-Weg zu, RSC-Weg offen) |
+| Neue Befunde | BUG-8 (Low), BUG-9 (Low) |
+| Angemeldet geprüft | Rahmen rendert auf `/wohnungen`, `/mieter`, `/konto`, `/irgendwas` (200, Werkzeugleiste, Statuszeile „Angemeldet: QA Test 2 …“, Menü Datei/Bearbeiten/Ansicht/Hilfe, Bereichsliste); `/` und `/anmelden` → 307 `/wohnungen`; abgelaufenes bzw. fehlendes `ww-aktiv` → 307 `/anmelden`, auch auf `/konto.png`; die Sitzung wurde dabei serverseitig beendet (Folgeaufruf → 307) |
+| Empfehlung | **NOT READY** – BUG-1 (High) ist offen |
+
+---
+
+## Erster Lauf 2026-11-16 @ `bef57b2` (Basis, soweit oben nicht aktualisiert)
+
 - **Datum:** 2026-11-16 · **Lauf:** erster `/qa` (keine Nachprüfung) · **Branch:** `feat/PROJ-2-app-rahmen-navigation` @ `bef57b2`
 - **Vorgehen:** drei unabhängige `qa-engineer`-Lanes (Abnahme, Sicherheit, Regression) ohne Kenntnis des Builds; Zusammenführung durch den Owner.
 - **App:** `npm run dev` auf http://localhost:3000, geprüft per `curl` und Quelltext. **Kein Browser, keine angemeldete Sitzung** (Login hat CAPTCHA; `tests/.auth/` nach SEC-01 nicht gelesen) – alles, was angemeldetes Laufzeit-HTML braucht, ist über Code und Komponententests belegt und zusätzlich unten als NOT VERIFIED geführt.
@@ -21,16 +41,16 @@
 - [x] AC-2 — nur `main` mit `overflow-auto` (`programmfenster.tsx:104`), außen `overflow-hidden`; Test `programmfenster.test.tsx` (AC-2). Echtes Scrollen [!] NOT VERIFIED.
 - [x] AC-3 — Cookie `wohnwerk-fenster`, nur Wert `1` gilt (`rahmen.rules.ts:40-48`, `(angemeldet)/layout.tsx:36-42`); Tests `programmfenster.test.tsx`, `rahmen.rules.test.ts`.
 - [x] AC-4 — `curl /anmelden`: 0 Treffer für Menü, Werkzeugleiste, Bereichsliste, „Angemeldet:“, Maximieren.
-- [x] AC-5 — `src/app/page.tsx:5` → `/wohnungen`; Fallback nach Anmeldung `konto.schema.ts:65`, `auth.actions.ts:190`.
+- [x] AC-5 — 2. Lauf: angemeldet `/` und `/anmelden` → 307 `/wohnungen`; Login landete auf `/wohnungen`. — `src/app/page.tsx:5` → `/wohnungen`; Fallback nach Anmeldung `konto.schema.ts:65`, `auth.actions.ts:190`.
 - [x] AC-6 — `navigation.rules.ts:68-81`, `bereichsliste.tsx` (`aria-current`); Tests `bereichsliste.test.tsx`, `navigation.rules.test.ts`.
 - [x] AC-7 — Verzeichnis `navigation.rules.ts:22-30` (`gebaut: false`); Tests `bereichsliste`, `menueleiste`, `schublade`, `use-menues` (je AC-7).
 - [x] AC-8 — abgemeldet: `/wohnungen/123?x=1` → 307 `/anmelden?weiter=%2Fwohnungen%2F123%3Fx%3D1`; Rücksprung `sichereRuecksprungadresse`. Angemeldetes Lesezeichen [!] NOT VERIFIED.
 - [x] AC-9 — Ableitung aus `usePathname`, `rahmen-kontext.tsx:253-261`; Test `rahmen-kontext.test.tsx` (AC-9). Echter Browser-Verlauf [!] NOT VERIFIED.
-- [x] AC-10 — `(angemeldet)/[...pfad]/page.tsx:10-12` → `notFound()` → `NichtGefunden`; Test `inhalt-meldungen.test.tsx`.
+- [x] AC-10 — 2. Lauf: angemeldet `curl /irgendwas` → 200 im Rahmen. — `(angemeldet)/[...pfad]/page.tsx:10-12` → `notFound()` → `NichtGefunden`; Test `inhalt-meldungen.test.tsx`.
 - [x] AC-11 — `navigation.rules.ts:141-167` wörtlich; Tests `navigation.rules.test.ts`, `menueleiste.test.tsx`.
 - [x] AC-12 — Tests `menueleiste.test.tsx` (Auswahl, Esc). Klick außerhalb (Radix) [!] NOT VERIFIED.
 - [x] AC-13 — gemeinsame `aktionAusfuehren` in `use-menues.ts`/`werkzeugleiste.tsx`; Tests `use-menues`, `werkzeugleiste`, `rahmen-kontext`.
-- [x] AC-14 — `(angemeldet)/konto/page.tsx` (`variante="eingebettet"`); Test `menueleiste.test.tsx` (AC-14).
+- [x] AC-14 — 2. Lauf: angemeldet `curl /konto` → 200 im Rahmen; `konto/page.tsx:17-22` nutzt `zugangPruefen`. — `(angemeldet)/konto/page.tsx` (`variante="eingebettet"`); Test `menueleiste.test.tsx` (AC-14).
 - [x] AC-15 — `auth.actions.ts:366-385`, `rahmen-kontext.tsx:325-338`; Tests `rahmen-kontext.test.tsx`, `menueleiste.test.tsx`. Laufzeit [!] NOT VERIFIED.
 - [x] AC-16 — `ueber-dialog.tsx:34-51`, Version aus `package.json` (`layout.tsx:58`); `curl /datenschutz`, `/impressum` → 200.
 - [x] AC-17 — `werkzeugleiste.tsx`; Tests `werkzeugleiste.test.tsx` (leer, genau die gemeldeten).
@@ -43,11 +63,11 @@
 - [x] AC-24 — `programmfenster.tsx:81,92`, `globals.css:420-440`, `statusleiste.tsx:42,47`; Tests `statusleiste`, `werkzeugleiste` (44 px), `programmfenster`. Darstellung [!] NOT VERIFIED.
 - [x] AC-25 — `schublade.tsx`; Tests `schublade.test.tsx` (5 Fälle). Antippen daneben [!] NOT VERIFIED.
 - [!] AC-26 — NOT VERIFIED: kein 360-px-Viewport. Code: Bedienelemente `min-h-11`/`size-11`; Test `schublade.test.tsx` „at least 44 px“.
-- [ ] AC-27 — **FAIL → BUG-1**. Übrige Wege (Bereichswechsel, Menüziel, Abmelden, einfaches Zurück) bestehen: `rahmen-kontext.tsx:221-250, 325-338`; Tests `rahmen-kontext`, `ungespeichert-waechter`.
+- [ ] AC-27 — **FAIL → BUG-1** (2. Lauf: Wege a/b behoben, Rückkehr-Weg R1/R3 offen). Übrige Wege (Bereichswechsel, Menüziel, Abmelden, einfaches Zurück) bestehen: `rahmen-kontext.tsx:221-250, 325-338`; Tests `rahmen-kontext`, `ungespeichert-waechter`.
 - [x] AC-28 — `ungespeichert-waechter.tsx:28-37`; Test „lets the browser ask only while changes are unsaved“. Native Rückfrage [!] NOT VERIFIED.
 - [x] AC-29 — Tests `rahmen-kontext.test.tsx`, `ungespeichert-waechter.test.tsx` (AC-29).
 - [x] AC-30 — Fokus-Stil `globals.css:339-344`; Esc-Tests in `menueleiste`, `schublade`, `ungespeichert-waechter`. Tab-Reihenfolge/sichtbarer Fokus [!] NOT VERIFIED.
-- [ ] AC-31 — **FAIL → BUG-3** (Dunkel-Titelleiste); Nebenbefund BUG-7. Hellmodus ≥ 5,12; alle anderen Paare ≥ 4,88 (WCAG-Formel über Tokens).
+- [x] AC-31 — 2. Lauf: BUG-3 geschlossen – `globals.css:271`, schlechtester Punkt 4,97:1 (dunkel), hell ≥ 5,12; Test `src/app/farben.test.ts`. BUG-7 (Hover 4,07) bleibt Deferred. 1. Lauf: FAIL. Hellmodus ≥ 5,12; alle anderen Paare ≥ 4,88 (WCAG-Formel über Tokens).
 - [x] AC-32 — `(angemeldet)/error.tsx`, keine Details; Test `inhalt-meldungen.test.tsx`. Nebenbefund BUG-6.
 - [x] AC-33 — `rahmen-kontext.tsx:115-146`, `rahmen.rules.ts:27`; Tests `rahmen-kontext`, `statusleiste`.
 - [!] AC-34 — NOT VERIFIED: Zeitmessung mit „Fast 4G“ nur in Browser-Werkzeugen. Mechanismus: Layout lädt keine Bereichsdaten, Schublade/Dialog per `dynamic`.
@@ -70,21 +90,29 @@
 ## Bugs
 
 ### BUG-1 — Browser-Zurück nach Seitenwechsel oder Speichern verwirft Eingaben ohne Rückfrage
-- **Severity:** High · **Status:** Open · **AC:** AC-27
+- **Severity:** High · **Status:** Open (2. Lauf: weiter offen) · **AC:** AC-27
 - **Repro:** (a) auf Seite A ändern → speichern → über Bereichsliste nach B → auf B ändern → Browser-Zurück: kein Dialog, Eingaben auf B weg. (b) auf A ändern → Bereichswechsel mit „Verwerfen“ → auf B ändern → Zurück: kein Dialog. Gegenprobe (jsdom-History) `scratchpad/probe/zurueck-nach-wechsel.test.tsx`: 2 failed, Kontrollfall passed.
 - **Ursache:** `ungespeichert-waechter.tsx:43` legt keinen neuen Wächter-Eintrag an, solange `eintragAktiv.current` `true` ist; das Flag wird nur im popstate-Handler (`:52`) zurückgesetzt, nicht bei Pfadwechsel oder Speichern. Zurück landet auf dem veralteten Eintrag von A, `:51` bricht still ab.
 - **Class:** Zustand eines Verlaufs-Wächters (Ref) überlebt Pfadwechsel/Speichern und deckt dann einen fremden Verlaufseintrag ab.
 - **Sweep:** `grep -rn "markeAnlegen(" src --include=*.ts --include=*.tsx | grep -v "\.test\."` → 4 Treffer (`schublade.tsx:58`, `ungespeichert-waechter.tsx:44, 58`, Definition `verlauf.ts:10`).
+- **2. Lauf:** Wege (a) und (b) behoben (Gegenprobe `zurueck-nach-wechsel.test.tsx` 3/3 grün). **Neuer Weg derselben Klasse:** `eintragPfad` (`ungespeichert-waechter.tsx:31`) merkt sich nur die Adresse, nicht den Verlaufseintrag, und wird nur im popstate-Handler (`:58`) zurückgesetzt. Bei A → B → A gilt `eintragPfad === pfad`, `:49` legt keinen neuen Eintrag an; Zurück verlässt A, landet auf B, die Eingaben auf A sind weg, der Dialog erscheint erst auf B.
+  - R1: auf A ändern → speichern → nach B → per Bereichsliste zurück nach A → ändern → Browser-Zurück. R3: wie R1, Wechsel aber mit „Verwerfen“. Gegenproben `scratchpad/probe/rueckkehr.test.tsx`, `verwerfen-rueckkehr.test.tsx` → FAIL (`expected '/b' to be '/a'`); Kontrollfall grün.
+  - Die neuen Unit-Tests prüfen nur A → B, nicht die Rückkehr.
+  - Sweep 2. Lauf: 4 Treffer (`schublade.tsx:58`, `ungespeichert-waechter.tsx:50, 64`, `verlauf.ts:10`).
 
 ### BUG-2 — Adressen mit Bildendung umgehen den Proxy (2FA- und Inaktivitätsprüfung)
-- **Severity:** Medium · **Status:** Open · **Sicherheit:** SEC-03
+- **Severity:** Medium · **Status:** Open (2. Lauf: teilweise geschlossen) · **Sicherheit:** SEC-03
 - **Repro:** `curl -i localhost:3000/konto.png` → 307 `/anmelden` **ohne** `weiter` (Layout-Redirect, Proxy lief nicht); `curl -i localhost:3000/konto` → 307 `/anmelden?weiter=%2Fkonto` (Proxy). Gleich für `/wohnungen.svg`, `/x/y.jpg`.
 - **Ursache:** Matcher `src/proxy.ts:106` nimmt `.svg|png|jpg|jpeg|gif|webp` aus; solche Pfade landen in `(angemeldet)/[...pfad]`. Das Layout (`layout.tsx:15-24, 53`) prüft nur `getUser()` – weder AAL2 (`proxy.ts:42-50`) noch Aktivitäts-Cookie (`proxy.ts:67`). Eine Sitzung mit offenem zweitem Faktor oder abgelaufener Inaktivität sieht den Rahmen samt E-Mail. Datensätze heute geschützt durch restriktive RLS (`20261114175034_konto_basis.sql:71`); jede künftige dynamische Route erbt die Lücke. Widerspricht `design.md` („alle Routen … durch die Anfrage-Grenze geschützt“).
 - **Class:** Geschützte Route an der Anfrage-Grenze vorbei erreichbar (Matcher-Ausnahme nach Dateiendung) und Rückfallprüfung im Layout schwächer als der Proxy.
 - **Sweep:** `find "src/app/(angemeldet)" -path "*[*" -name page.tsx` → 1; `grep -rln "auth.getUser()" src/app | xargs grep -L "getAuthenticatorAssuranceLevel\|aal2"` → 2 (`(angemeldet)/layout.tsx`, `konto/page.tsx`).
+- **2. Lauf – geschlossen (HTML-Weg):** Layout und Kontoseite nutzen `zugangPruefen` (`zugang.ts:38-48`: Sitzung → Inaktivität → AAL, schlägt geschlossen fehl). Abgemeldet: `/konto.png`, `/x.svg`, `/x/y.jpg`, `/x.webp`, `/konto/x.png` → 307 `/anmelden`. Angemeldet mit abgelaufenem bzw. fehlendem `ww-aktiv`: `/konto.png` → 307 `/anmelden` (Owner-Probe mit echter Sitzung). Alter Sweep 2 → 0.
+- **2. Lauf – noch offen (RSC-Weg):** RSC-Teilrendering überspringt das Layout. `curl -H "RSC: 1" -H "Next-Router-State-Tree: <Baum, (angemeldet) schon gerendert>" "localhost:3000/y.png?_rsc=…"` ohne Sitzung → **200** `text/x-component`; `layout.tsx` lief nicht (kein `NEXT_REDIRECT`), gerendert wurde `[...pfad]/page.tsx` → `notFound()`. Heute keine Daten erreichbar; jede künftige dynamische Seite (z. B. `/wohnungen/[id]` mit id `abc.png`) liefe ohne Proxy und ohne Layoutprüfung, und RLS kennt keine Inaktivität. Widerspricht dem neuen `design.md`-Eintrag. Belege `scratchpad/rsc3.txt`, `rsc4.txt`.
+- **Class (geschärft):** Zugangsprüfung nur in Proxy/Layout statt an Seite bzw. Datenzugriff; Layouts werden bei RSC-Teilrendering übersprungen, der Matcher lässt Pfade nach Dateiendung aus.
+- **Sweep (2. Lauf):** `find "src/app/(angemeldet)" -name page.tsx | xargs grep -L zugangPruefen` → 3 (`rahmen-test`, `wohnungen`, `[...pfad]`).
 
 ### BUG-3 — Titelleiste im Dunkelmodus unter 4,5:1 Kontrast
-- **Severity:** Medium · **Status:** Open · **AC:** AC-31
+- **Severity:** Medium · **Status:** Closed (2. Lauf: 4,97:1 am schlechtesten Punkt; Sweep 5 Treffer, alle über die Utility `titlebar`) · **AC:** AC-31
 - **Repro/Messung:** Text `#E6E4DF` auf Verlauf `#2F5597`→`#4A78B8` (`globals.css:270-271`): 5,76 (0 %), 4,46 (50 %), 4,06 (70 %), 3,54 (100 %). Betrifft lange Titel (Dialog „Nicht gespeicherte Änderungen verwerfen?“, Handy-Titel, Detailtitel). Der axe-Test `tests/rahmen-bedienbarkeit.spec.ts:149` wertet nur `violations` aus – Verläufe landen unter `incomplete`. Die Vorgabe selbst ist widersprüchlich (`docs/design-system.md:15` vs. `:23`).
 - **Class:** Textkontrast auf Verlaufs-/Hover-Hintergründen ungeprüft.
 - **Sweep:** `grep -rn "titlebar" src --include=*.tsx | grep -v "\.test\."` → 5 Treffer.
@@ -112,7 +140,21 @@
 - **Messung:** `#F07A7A` auf Hover-Mischung `#3A3C43` → 4,07.
 - **Class/Sweep:** wie BUG-3 (Hover-Hintergründe) – `grep -rn "hover:" src/components/rahmen --include=*.tsx | grep -v "\.test\."`.
 
+### BUG-8 — Proxy-Matcher-Ausnahmen ohne Schrägstrich (neu, 2. Lauf)
+- **Severity:** Low · **Status:** Deferred
+- **Befund:** `src/proxy.ts:84` nimmt `_next/static`, `_next/image`, `favicon.ico` als Präfix ohne `/` aus. `curl -i /_next/staticx`, `/favicon.icox` → 307 `/anmelden` ohne `weiter`, also ohne Proxy. Folgen heute wie BUG-2 (nur Auffangseite).
+- **Class:** wie BUG-2/BUG-4 (Matcher-Ausnahmen). **Sweep:** `grep -n "matcher" src/proxy.ts` → 1.
+
+### BUG-9 — `zweiFaktorPruefen` belebt abgelaufene Sitzung ohne Inaktivitätsprüfung (neu, 2. Lauf)
+- **Severity:** Low · **Status:** Deferred · **Sicherheit:** SEC-03
+- **Befund:** Auf vom Proxy ausgelassenen Pfaden laufen Actions aus `auth.actions.ts` ohne Proxy. `zweiFaktorPruefen` (`auth.actions.ts:194-215`) setzt das Aktivitäts-Cookie, ohne Inaktivität zu prüfen; mit gültigem TOTP-Code ließe sich eine abgelaufene aal1-Sitzung wiederbeleben. `konto.actions.ts:73-83` prüft aal2, aber keine Inaktivität. Nicht mit echter Sitzung nachgestellt (Einschätzung aus Code).
+- **Class:** Server-Actions ohne eigene Zugangsprüfung (verlassen sich auf den Proxy). **Sweep:** `grep -L "istInaktiv\|zugangPruefen" src/features/*/*.actions.ts` → 1 (`konto.actions.ts`), dazu `zweiFaktorPruefen` in `auth.actions.ts`.
+
 ## Sicherheit (Red Team)
+
+**2. Lauf:** SEC-01, -03, -05. Verifiziert: kodierte/verbogene Pfade (`/konto%2Epng`, `/konto.png%00`, `/KONTO`, `/konto;.png` …) → 307; Header-Tricks (`x-middleware-subrequest` ×3, Prefetch, `x-nextjs-data`, `x-invoke-path`, `x-matched-path`) → 307; Proxy-Logik nach Umstellung ohne Abschwächung; Secrets im Bundle → 0 (nur öffentlicher Turnstile-Site-Key); 15/15 Formulare per Server-Action/POST; Inaktivität mit echter Sitzung erzwungen, inkl. serverseitiger Abmeldung. Befunde: BUG-2 (Rest), BUG-8, BUG-9. [!] NOT VERIFIED: Autorisierung X gegen Y (PROJ-2 hat keine eigenen Datensätze zum Vergleichen), Produktions-Build.
+
+**1. Lauf:**
 
 Kontrollen: SEC-01, -02, -03, -05, -06 (SEC-04/-07 nicht zutreffend). **12 verifiziert, 7 NOT VERIFIED, 2 Befunde (BUG-2, BUG-5).**
 
@@ -137,6 +179,10 @@ Kontrollen: SEC-01, -02, -03, -05, -06 (SEC-04/-07 nicht zutreffend). **12 verif
 - [!] Skript-CSP mit Nonce — NOT VERIFIED: bewusst auf `/deploy` verschoben (`design.md`).
 
 ## Regression
+
+**2. Lauf:** PROJ-1-Seiten (`/anmelden`, `/registrieren`, `/passwort-vergessen`, `/link-ungueltig`, `/datenschutz`, `/impressum`) → 200; geschützte Routen → 307 mit `weiter`; statische Assets 200; PROJ-1 AC-5/7/9/10/12–15/18/19 im Code unverändert bzw. über `zugangPruefen` gleichwertig; angemeldet Login → `/wohnungen`, Kontoseite 200. E2E-Suite [!] NOT VERIFIED – `tests/anmelden.setup.ts:50` erwartet eine CDP-Sitzung; das geplante `scripts/qa-sitzung.mjs` fehlt noch.
+
+**1. Lauf:**
 
 - [x] Keine Features im Status „Deployed“ (`features/INDEX.md`).
 - [x] PROJ-1 öffentliche Seiten `/anmelden`, `/registrieren`, `/passwort-vergessen`, `/link-ungueltig`, `/datenschutz`, `/impressum` → 200 mit korrekten Tab-Titeln.
@@ -176,4 +222,6 @@ Nicht ausgeführt. Eine Playwright-Suite existiert (`tests/rahmen-*.spec.ts`), b
 
 ## Entscheidung
 
-**NOT READY** – BUG-1 (High, AC-27) ist offen. Status bleibt **In Review**.
+**2. Lauf: NOT READY** – BUG-1 (High, AC-27) ist weiter offen (Rückkehr-Weg). BUG-2 (Medium) bleibt Open für den RSC-Weg. BUG-3 geschlossen. BUG-4 bis BUG-9 Deferred. Status bleibt **In Review**.
+
+1. Lauf: NOT READY – BUG-1 (High, AC-27) offen.
