@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useRahmenZustand } from './rahmen-kontext'
-import { aktuelleMarke, markeAnlegen } from './verlauf'
+import { aktuellerEintrag, markeAnlegen } from './verlauf'
 
 /**
  * Guards unsaved changes: the dialog "Nicht gespeicherte Änderungen verwerfen?" (AC-27), the
@@ -25,10 +25,10 @@ export function UngespeichertWaechter() {
   // The address actually shown; the frame's `pfad` is already the destination while loading.
   const pfad = usePathname() ?? '/'
   /**
-   * Address of the page our own history entry guards, or null when there is none. An entry of
-   * another page lies below the current page's entry and guards nothing here (BUG-1).
+   * Id of our own history entry, or null when there is none. Only the entry the browser is on
+   * guards anything: an older one - even of the same address - lies below and is useless (BUG-1).
    */
-  const eintragPfad = useRef<string | null>(null)
+  const eintragId = useRef<string | null>(null)
 
   // AC-28 / AC-29: the browser only asks while a page reports unsaved changes.
   useEffect(() => {
@@ -46,29 +46,29 @@ export function UngespeichertWaechter() {
   // Back button: the App Router cannot block a navigation. An additional history entry with the
   // same address takes the "Zurück"; then the frame asks.
   useEffect(() => {
-    if (!ungespeichert || eintragPfad.current === pfad) return
-    markeAnlegen('ungespeichert')
-    eintragPfad.current = pfad
+    if (!ungespeichert || (eintragId.current !== null && aktuellerEintrag() === eintragId.current)) {
+      return
+    }
+    eintragId.current = markeAnlegen('ungespeichert')
   }, [ungespeichert, pfad])
 
   useEffect(() => {
     const zurueck = () => {
       // Still on our entry (e.g. the drawer's entry above it was closed): nothing was used up.
-      if (eintragPfad.current === null || aktuelleMarke() === 'ungespeichert') return
-      eintragPfad.current = null
+      if (eintragId.current === null || aktuellerEintrag() === eintragId.current) return
+      eintragId.current = null
       // Saved in the meantime: the entry is simply gone, a "Zurück" without visible effect.
       if (!istUngespeichert()) return
       rueckfrageStellen(
         () => window.history.back(),
         () => {
-          markeAnlegen('ungespeichert')
-          eintragPfad.current = pfad
+          eintragId.current = markeAnlegen('ungespeichert')
         }
       )
     }
     window.addEventListener('popstate', zurueck)
     return () => window.removeEventListener('popstate', zurueck)
-  }, [pfad, istUngespeichert, rueckfrageStellen])
+  }, [istUngespeichert, rueckfrageStellen])
 
   return (
     <AlertDialog

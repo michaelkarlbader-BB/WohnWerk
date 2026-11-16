@@ -1,6 +1,7 @@
 // @vitest-environment node
 // BUG-2: addresses the proxy skips (e.g. /konto.png) reach the signed-in pages directly. Their
 // own checks must be as strict as the proxy: session, 30-minute inactivity, second factor.
+// 2nd run: a partial render (RSC) skips the layout, so every page must check by itself.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AKTIVITAET_COOKIE } from '@/features/konto/konto.rules'
 
@@ -13,6 +14,9 @@ const h = vi.hoisted(() => ({
   redirect: vi.fn((ziel: string) => {
     throw new Error(`REDIRECT ${ziel}`)
   }),
+  notFound: vi.fn(() => {
+    throw new Error('NOT_FOUND')
+  }),
 }))
 
 vi.mock('server-only', () => ({}))
@@ -22,7 +26,7 @@ vi.mock('next/headers', () => ({
       name === AKTIVITAET_COOKIE && h.cookie !== undefined ? { value: h.cookie } : undefined,
   }),
 }))
-vi.mock('next/navigation', () => ({ redirect: h.redirect }))
+vi.mock('next/navigation', () => ({ redirect: h.redirect, notFound: h.notFound }))
 vi.mock('@/lib/supabase/server', () => ({ createClient: async () => ({ auth: h.auth }) }))
 vi.mock('@/features/konto/konto.data', () => ({
   profilLesen: async () => ({ id: 'u1', anzeigename: null, angelegtAm: '2026-11-01' }),
@@ -31,6 +35,9 @@ vi.mock('@/features/konto/auth.actions', () => ({ abmelden: vi.fn() }))
 
 import AngemeldetLayout from './layout'
 import KontoPage from './konto/page'
+import WohnungenSeite from './wohnungen/page'
+import UnbekannteAdresse from './[...pfad]/page'
+import RahmenTestPage from './rahmen-test/page'
 
 const JETZT = new Date('2026-11-16T10:00:00Z').getTime()
 const MINUTE = 60_000
@@ -47,6 +54,20 @@ function sitzung({ faktorOffen = false, aktivVorMin = 1 } = {}) {
 const SEITEN = [
   ['layout', () => AngemeldetLayout({ children: null })],
   ['account page', () => KontoPage()],
+  ['apartments page', () => WohnungenSeite()],
+  ['test page of the frame', () => RahmenTestPage()],
+  // Shown in full, the catch-all answers "not found" - never a redirect.
+  [
+    'catch-all',
+    async () => {
+      try {
+        await UnbekannteAdresse()
+      } catch (fehler) {
+        if (String(fehler).includes('NOT_FOUND')) return true
+        throw fehler
+      }
+    },
+  ],
 ] as const
 
 beforeEach(() => {

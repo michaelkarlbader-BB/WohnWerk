@@ -245,6 +245,40 @@ describe('Zurück im Browser', () => {
     expect(screen.getByRole('alertdialog', { name: FRAGE })).toBeInTheDocument()
   })
 
+  // BUG-1, 2nd run: back on a page whose old guard entry lies deep below - an equal address is
+  // not the same history entry.
+  function zurueckZurErstenSeite(seite: { melden: (wert: boolean) => void }) {
+    act(() => window.history.pushState(null, '', '/wohnungen'))
+    nav.pfad = '/wohnungen'
+    seite.melden(false)
+    pushState.mockClear()
+  }
+
+  it('guards the first page again on return after saving (A → B → A, AC-27)', () => {
+    const seite = aufbauen(true)
+    seite.melden(false)
+    zurNaechstenSeite(seite)
+    zurueckZurErstenSeite(seite)
+
+    seite.melden(true)
+    expect(pushState).toHaveBeenCalledTimes(1)
+    zurueckImBrowser()
+    expect(screen.getByRole('alertdialog', { name: FRAGE })).toBeInTheDocument()
+  })
+
+  it('guards the first page again on return after discarding (A → B → A, AC-27)', () => {
+    const seite = aufbauen(true)
+    act(() => rahmen.navigieren('/mieter'))
+    fireEvent.click(screen.getByRole('button', { name: 'Verwerfen' }))
+    zurNaechstenSeite(seite)
+    zurueckZurErstenSeite(seite)
+
+    seite.melden(true)
+    expect(pushState).toHaveBeenCalledTimes(1)
+    zurueckImBrowser()
+    expect(screen.getByRole('alertdialog', { name: FRAGE })).toBeInTheDocument()
+  })
+
   it('leaves the history alone without unsaved changes', () => {
     aufbauen(false)
     zurueckImBrowser()

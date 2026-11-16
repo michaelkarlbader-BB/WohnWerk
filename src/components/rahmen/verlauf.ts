@@ -5,16 +5,31 @@
 export type VerlaufsMarke = 'ungespeichert' | 'schublade'
 
 const SCHLUESSEL = 'wohnwerkMarke'
+const ID_SCHLUESSEL = 'wohnwerkEintrag'
 
-/** Adds an entry with the same address on top of the history, carrying the marker. */
-export function markeAnlegen(marke: VerlaufsMarke): void {
-  window.history.pushState({ [SCHLUESSEL]: marke }, '', window.location.href)
+function zustand(): Record<string, unknown> | null {
+  const wert: unknown = window.history.state
+  return typeof wert === 'object' && wert !== null ? (wert as Record<string, unknown>) : null
+}
+
+/**
+ * Adds an entry with the same address on top of the history, carrying the marker. Returns the
+ * entry's own id: two entries of the same address are still different entries (PROJ-2 BUG-1).
+ */
+export function markeAnlegen(marke: VerlaufsMarke): string {
+  const id = crypto.randomUUID()
+  window.history.pushState({ [SCHLUESSEL]: marke, [ID_SCHLUESSEL]: id }, '', window.location.href)
+  return id
 }
 
 /** Marker of the entry the browser is on right now, or null for an ordinary entry. */
 export function aktuelleMarke(): VerlaufsMarke | null {
-  const zustand: unknown = window.history.state
-  if (typeof zustand !== 'object' || zustand === null) return null
-  const marke = (zustand as Record<string, unknown>)[SCHLUESSEL]
+  const marke = zustand()?.[SCHLUESSEL]
   return marke === 'ungespeichert' || marke === 'schublade' ? marke : null
+}
+
+/** Id of the own entry the browser is on right now, or null for an ordinary entry. */
+export function aktuellerEintrag(): string | null {
+  const id = zustand()?.[ID_SCHLUESSEL]
+  return typeof id === 'string' ? id : null
 }

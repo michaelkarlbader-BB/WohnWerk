@@ -1,27 +1,19 @@
 import type { Metadata } from 'next'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
 
 import { MessageBox, Window } from '@/components/retro/window'
 import { tabTitel } from '@/components/rahmen/navigation.rules'
 import { KontoFenster } from '@/features/konto/components/konto-fenster'
 import { profilLesen } from '@/features/konto/konto.data'
-import { AKTIVITAET_COOKIE } from '@/features/konto/konto.rules'
-import { zugangPruefen } from '@/features/konto/zugang'
+import { seiteSchuetzen } from '@/features/konto/seite-schuetzen'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = { title: tabTitel('konto') }
 
 /** Everything stored about the account (AC-18); null when it cannot be loaded. */
-async function kontoLaden() {
-  const supabase = await createClient()
-  // Same check as the proxy and the layout; a page renders alongside its layout (BUG-2).
-  const aktivitaet = (await cookies()).get(AKTIVITAET_COOKIE)?.value
-  const zugang = await zugangPruefen(supabase, aktivitaet, Date.now())
-  const user = zugang.stufe === 'voll' ? zugang.nutzer : null
-  if (!user?.email) return 'abgemeldet' as const
-
+async function kontoLaden(user: { email?: string }) {
+  if (!user.email) return null
   try {
+    const supabase = await createClient()
     const [profil, faktoren] = await Promise.all([profilLesen(), supabase.auth.mfa.listFactors()])
     if (!profil || faktoren.error) return null
     return {
@@ -36,8 +28,8 @@ async function kontoLaden() {
 }
 
 export default async function KontoPage() {
-  const konto = await kontoLaden()
-  if (konto === 'abgemeldet') redirect('/anmelden?weiter=%2Fkonto')
+  // Every page checks access itself; a partial render skips the layout (BUG-2).
+  const konto = await kontoLaden(await seiteSchuetzen('/konto'))
 
   if (!konto) {
     return (
