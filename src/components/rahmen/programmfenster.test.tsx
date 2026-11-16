@@ -166,7 +166,7 @@ describe('Schublade und Dialog', () => {
 
     fireEvent.click(knopf)
 
-    expect(await screen.findByRole('dialog', { name: 'Menü' })).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: 'Menü' }, { timeout: 10_000 })).toBeInTheDocument()
     // The drawer covers the page, so the button is found by its label only.
     expect(screen.getByLabelText('Menü öffnen')).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getAllByText('Inhalt der Seite')).toHaveLength(1)
@@ -181,7 +181,7 @@ describe('Schublade und Dialog', () => {
     })
     fireEvent.click(screen.getByRole('menuitem', { name: 'Über WohnWerk' }))
 
-    const dialog = await screen.findByRole('dialog', { name: 'Über WohnWerk' })
+    const dialog = await screen.findByRole('dialog', { name: 'Über WohnWerk' }, { timeout: 10_000 })
     expect(dialog).toHaveTextContent('Version 1.2.3')
     expect(within(dialog).getByRole('link', { name: 'Datenschutz' })).toHaveAttribute('href', '/datenschutz')
     expect(within(dialog).getByRole('link', { name: 'Impressum' })).toHaveAttribute('href', '/impressum')

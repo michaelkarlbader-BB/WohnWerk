@@ -307,6 +307,24 @@ describe('Navigation', () => {
     expect(zustand.statustext).toBe('Bereit')
   })
 
+  it('forgets the destination once it is reached - also after going back (AC-9)', () => {
+    const seite = aufbauen()
+    act(() => rahmen.navigieren('/konto'))
+    nav.pfad = '/konto'
+    seite.neu()
+
+    // "Zurück" in the browser: the old path is current again.
+    nav.pfad = '/wohnungen'
+    seite.neu()
+    expect(zustand.pfad).toBe('/wohnungen')
+    expect(zustand.laedt).toBe(false)
+
+    // The same destination can be chosen again.
+    act(() => rahmen.navigieren('/konto'))
+    expect(nav.push).toHaveBeenCalledTimes(2)
+    expect(zustand.pfad).toBe('/konto')
+  })
+
   it('ignores the view that is already shown (EC-1)', () => {
     aufbauen()
     act(() => rahmen.navigieren('/wohnungen'))

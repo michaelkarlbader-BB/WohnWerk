@@ -47,12 +47,12 @@ Pfade ohne Präfix liegen unter `src/components/rahmen/`; Routen in `(angemeldet
 
 ## Ebene 6 — Browser-Tests (Playwright)
 
-- [ ] T19 [P]  Navigation: Startseite, Bereichswechsel, Lesezeichen/Direktaufruf, Zurück/Vor, unbekannte Adresse, ungebauter Bereich, abgemeldet, Mehrfachklick  · files: tests/rahmen-navigation.spec.ts  · → AC-1, AC-2, AC-4, AC-5, AC-6, AC-7, AC-8, AC-9, AC-10, AC-36, EC-1, EC-2, EC-9
-- [ ] T20 [P]  Menüs, Werkzeugleiste, Statusleiste, Offline-Hinweis  · files: tests/rahmen-menue-status.spec.ts  · → AC-11, AC-12, AC-13, AC-14, AC-15, AC-16, AC-17, AC-21, AC-22, AC-23, AC-33, EC-10
-- [ ] T21 [P]  Ungespeichert (Bereichswechsel, Menüziel, Abmelden, Zurück, Neuladen) und Fehlergrenze – in Chrome, Firefox und Safari  · files: tests/rahmen-ungespeichert.spec.ts  · → AC-27, AC-28, AC-29, AC-32, EC-3
-- [ ] T22 [P]  Darstellung und Maximieren: kein Aufblitzen, Wie System folgt live, privates Fenster ohne Fehler  · files: tests/rahmen-darstellung.spec.ts  · → AC-3, AC-18, AC-19, AC-20, EC-6, EC-7
-- [ ] T23 [P]  Handy bei 360 px: kein waagrechter Bildlauf, Bedienelemente ≥ 44 px, Schublade, Breitenwechsel mit erhaltenen Eingaben  · files: tests/rahmen-handy.spec.ts  · → AC-24, AC-25, AC-26, EC-4
-- [ ] T24 [P]  Tastatur (Tab-Reihenfolge, Enter/Leertaste, Esc, sichtbarer Fokus) und Kontrast mit axe in Hell und Dunkel; Entwicklungspaket `@axe-core/playwright`  · files: tests/rahmen-bedienbarkeit.spec.ts, package.json, package-lock.json  · → AC-30, AC-31
+- [x] T19 [P]  Navigation: Startseite, Bereichswechsel, Lesezeichen/Direktaufruf, Zurück/Vor, unbekannte Adresse, ungebauter Bereich, abgemeldet, Mehrfachklick  · files: tests/rahmen-navigation.spec.ts  · → AC-1, AC-2, AC-4, AC-5, AC-6, AC-7, AC-8, AC-9, AC-10, AC-36, EC-1, EC-2, EC-9
+- [x] T20 [P]  Menüs, Werkzeugleiste, Statusleiste, Offline-Hinweis  · files: tests/rahmen-menue-status.spec.ts  · → AC-11, AC-12, AC-13, AC-14, AC-15, AC-16, AC-17, AC-21, AC-22, AC-23, AC-33, EC-10
+- [x] T21 [P]  Ungespeichert (Bereichswechsel, Menüziel, Abmelden, Zurück, Neuladen) und Fehlergrenze – in Chrome, Firefox und Safari  · files: tests/rahmen-ungespeichert.spec.ts  · → AC-27, AC-28, AC-29, AC-32, EC-3
+- [x] T22 [P]  Darstellung und Maximieren: kein Aufblitzen, Wie System folgt live, privates Fenster ohne Fehler  · files: tests/rahmen-darstellung.spec.ts  · → AC-3, AC-18, AC-19, AC-20, EC-6, EC-7
+- [x] T23 [P]  Handy bei 360 px: kein waagrechter Bildlauf, Bedienelemente ≥ 44 px, Schublade, Breitenwechsel mit erhaltenen Eingaben  · files: tests/rahmen-handy.spec.ts  · → AC-24, AC-25, AC-26, EC-4
+- [x] T24 [P]  Tastatur (Tab-Reihenfolge, Enter/Leertaste, Esc, sichtbarer Fokus) und Kontrast mit axe in Hell und Dunkel; Entwicklungspaket `@axe-core/playwright`  · files: tests/rahmen-bedienbarkeit.spec.ts, package.json, package-lock.json  · → AC-30, AC-31
 
 ## Abdeckung
 

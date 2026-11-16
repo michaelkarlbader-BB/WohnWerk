@@ -37,6 +37,8 @@ export function Schublade({ offen, onOffenChange, onUeber }: SchubladeProps) {
   const aktiv = aktivesZiel(pfad)
   /** True while a chosen entry waits for the history entry to be removed (EC-9). */
   const wartet = useRef(false)
+  /** True when a step back was already requested for the entry that is still on top. */
+  const ohneZurueck = useRef(false)
 
   // EC-4: from md upwards the menu bar and the area list take over.
   useEffect(() => {
@@ -45,17 +47,20 @@ export function Schublade({ offen, onOffenChange, onUeber }: SchubladeProps) {
 
   // "Zurück" closes the drawer instead of leaving the page: an own history entry takes it.
   useEffect(() => {
-    if (!offen) return
-    markeAnlegen('schublade')
+    if (!offen) {
+      // Closed in another way (tap beside it, Esc, width): take our entry out again.
+      if (aktuelleMarke() === 'schublade' && !ohneZurueck.current) window.history.back()
+      ohneZurueck.current = false
+      return
+    }
+    // Not in a cleanup and only once: effects may run twice, and the browser decides where
+    // history.back() leads at the moment it is called.
+    if (aktuelleMarke() !== 'schublade') markeAnlegen('schublade')
     const zurueck = () => {
       if (aktuelleMarke() !== 'schublade') onOffenChange(false)
     }
     window.addEventListener('popstate', zurueck)
-    return () => {
-      window.removeEventListener('popstate', zurueck)
-      // Closed in another way (tap beside it, Esc, width): take our entry out again.
-      if (aktuelleMarke() === 'schublade') window.history.back()
-    }
+    return () => window.removeEventListener('popstate', zurueck)
   }, [offen, onOffenChange])
 
   /** Closes the drawer, then runs the chosen entry. */
@@ -76,6 +81,8 @@ export function Schublade({ offen, onOffenChange, onUeber }: SchubladeProps) {
       wartet.current = false
       window.removeEventListener('popstate', weiter)
       window.clearTimeout(frist)
+      // The browser has not reported the step back yet: do not ask for a second one.
+      ohneZurueck.current = aktuelleMarke() === 'schublade'
       onOffenChange(false)
       aktion()
     }

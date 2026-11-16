@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RahmenKontext, useRahmenBereich, type BereichEinrichtung } from './rahmen-kontext'
 import { Schublade } from './schublade'
@@ -148,6 +149,19 @@ describe('Schublade', () => {
     expect(pushState).toHaveBeenCalledTimes(1)
     expect(window.location.pathname).toBe('/wohnungen')
     expect(window.history.state).toMatchObject({ wohnwerkMarke: 'schublade' })
+  })
+
+  it('keeps one entry and stays open when its effects run twice (React StrictMode)', () => {
+    render(
+      <StrictMode>
+        <RahmenKontext abmelden={abmelden}>
+          <Schublade offen onOffenChange={onOffenChange} onUeber={onUeber} />
+        </RahmenKontext>
+      </StrictMode>
+    )
+    expect(pushState).toHaveBeenCalledTimes(1)
+    expect(back).not.toHaveBeenCalled()
+    expect(onOffenChange).not.toHaveBeenCalled()
   })
 
   it('"Zurück" closes it without any action (AC-25)', () => {

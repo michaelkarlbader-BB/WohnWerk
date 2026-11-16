@@ -242,3 +242,20 @@ Keine Entscheidung dieses Entwurfs ist projektweit *tragend* im Sinne von ADR-00
 ## Offene Fragen
 
 - keine
+
+## Umsetzungsnotizen (`/build`, 2026-11-16)
+
+Abweichungen und Ergänzungen gegenüber dem Entwurf – jeweils klein und begründet:
+
+- **Zusätzliche Hilfsmodule im Rahmen:** `use-menues.ts` (eine gemeinsame Menü-Logik für Menüleiste und Schublade, damit beide dasselbe anbieten und tun) und `verlauf.ts` (markierte Verlaufseinträge, damit sich Wächter „ungespeichert“ und Schublade beim Zurück-Knopf nicht gegenseitig stören).
+- **Rahmen-Schnittstelle um `useRahmenVorAbmelden` ergänzt** (nur für den Sitzungswächter, wie „ohne Rückfrage verlassen“): Das Abmelden aus dem Menü meldet sich weiterhin in den anderen Tabs ab (PROJ-1 EC-4), ohne dass der Rahmen Code aus dem Konto-Feature importiert.
+- **Schublade und „Zurück“ (AC-25):** Die Schublade legt beim Öffnen einen eigenen Verlaufseintrag derselben Adresse an; „Zurück“ schließt sie. Ein gewählter Eintrag wird erst ausgeführt, wenn dieser Eintrag wieder entfernt ist.
+- **Tab-Titel:** Weil das Wurzel-Layout jetzt „WohnWerk – “ voranstellt, setzen auch die abgemeldeten Seiten sowie Datenschutz und Impressum nur noch ihren eigenen Namen; die sichtbaren Tab-Titel sind unverändert. Unbekannte Adressen heißen „WohnWerk – Seite nicht gefunden“.
+- **Unbekannte Adresse und Statuscode:** Die Seite „Diese Seite gibt es nicht.“ wird hinter dem Ladezustand gestreamt; der HTTP-Status ist dabei 200 (Next.js setzt `noindex`). Die Spec verlangt keinen Statuscode.
+- **Kontoseite:** eingebettet ohne eigene Titelleiste; ihre eigene Statuszeile für Meldungen der Registerkarten bleibt wie in PROJ-1 bestehen.
+- **Fehlergrenze:** nutzt `retry` von Next.js 16.3+ (lädt die Daten des Bereichs neu und baut ihn neu auf).
+- **`AbmeldenKnopf` (PROJ-1)** wird vom Layout nicht mehr verwendet (Abmelden läuft über Menü und Schublade); Datei und Test bleiben vorerst liegen.
+- **Browser-Tests:** zusätzlich `tests/anmelden.setup.ts`, `tests/rahmen.hilfen.ts`, Anpassung von `playwright.config.ts` (Projekte Chromium, Firefox, WebKit, Handy-Safari, „abmelden“ zuletzt) und `.gitignore` (`tests/.auth/`). Das CAPTCHA der Anmeldung läuft in einem von Playwright gesteuerten Browser nicht durch und wird für Tests nicht abgeschwächt: Vor einem Lauf meldet sich eine Person in einem normalen Chrome an, das Setup übernimmt nur die Sitzung (Ablauf im Kopf von `tests/anmelden.setup.ts`). Der letzte Test meldet das Testkonto ab; jeder vollständige Lauf braucht daher eine neue Anmeldung.
+- **Parallelisierung:** Worktree-Isolation wird in diesem Arbeitsordner abgelehnt; alle `[P]`-Aufgaben wurden nacheinander gebaut.
+- **Von den Browser-Tests gefundene und behobene Fehler:** (1) Nach „Zurück“ blieb ein altes Navigationsziel in Titelleiste und Auswahl stehen; (2) die Schublade schloss sich im Entwicklungsmodus sofort wieder. Beide haben einen Unit-Test, der vorher rot war.
+

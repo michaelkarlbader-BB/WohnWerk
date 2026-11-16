@@ -248,7 +248,16 @@ export function RahmenKontext({ children, abmelden }: RahmenKontextProps) {
     },
     [pathname, router, geschuetzt]
   )
-  // The destination only counts until the path has changed.
+  // The destination only counts until the path has changed - otherwise it would come back
+  // when the browser returns to the page the navigation started from.
+  const [zielPfadname, setZielPfadname] = useState(pathname)
+  if (zielPfadname !== pathname) {
+    setZielPfadname(pathname)
+    setZiel(null)
+  }
+  useEffect(() => {
+    zielRef.current = null
+  }, [pathname])
   const angesteuert = ziel && ziel.von === pathname ? ziel.pfad : null
 
   // ---- Confirmation ----
