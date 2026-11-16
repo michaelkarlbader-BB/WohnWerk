@@ -6,18 +6,24 @@ import { RahmenKontext } from '@/components/rahmen/rahmen-kontext'
 import { FENSTER_COOKIE, istMaximiert } from '@/components/rahmen/rahmen.rules'
 import { UngespeichertWaechter } from '@/components/rahmen/ungespeichert-waechter'
 import { abmelden } from '@/features/konto/auth.actions'
+import { AKTIVITAET_COOKIE } from '@/features/konto/konto.rules'
 import { Sitzungswaechter } from '@/features/konto/components/sitzungswaechter'
 import { profilLesen } from '@/features/konto/konto.data'
+import { zugangPruefen } from '@/features/konto/zugang'
 import { createClient } from '@/lib/supabase/server'
 import paket from '../../../package.json'
 
-/** E-mail of the signed-in user, or null. Fails closed: any error counts as signed out. */
+/**
+ * E-mail of the fully signed-in user, or null. The same check as the proxy (session, inactivity,
+ * second factor), because addresses the proxy skips still end up here (BUG-2).
+ * Fails closed: any error counts as signed out.
+ */
 async function angemeldeteEmail(): Promise<{ email: string } | null> {
   try {
     const supabase = await createClient()
-    const { data, error } = await supabase.auth.getUser()
-    if (error || !data?.user) return null
-    return { email: data.user.email ?? '' }
+    const aktivitaet = (await cookies()).get(AKTIVITAET_COOKIE)?.value
+    const zugang = await zugangPruefen(supabase, aktivitaet, Date.now())
+    return zugang.stufe === 'voll' ? { email: zugang.nutzer.email ?? '' } : null
   } catch {
     return null
   }

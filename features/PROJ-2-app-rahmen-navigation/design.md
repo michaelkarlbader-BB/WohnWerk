@@ -259,3 +259,5 @@ Abweichungen und Ergänzungen gegenüber dem Entwurf – jeweils klein und begr�
 - **Parallelisierung:** Worktree-Isolation wird in diesem Arbeitsordner abgelehnt; alle `[P]`-Aufgaben wurden nacheinander gebaut.
 - **Von den Browser-Tests gefundene und behobene Fehler:** (1) Nach „Zurück“ blieb ein altes Navigationsziel in Titelleiste und Auswahl stehen; (2) die Schublade schloss sich im Entwicklungsmodus sofort wieder. Beide haben einen Unit-Test, der vorher rot war.
 
+- **Gemeinsame Zugangsprüfung (BUG-2, Freigabe des Nutzers 2026-11-16):** `src/features/konto/zugang.ts` (`zugangPruefen`: Sitzung, 30-Minuten-Inaktivität, zweiter Faktor) wird von Proxy, angemeldetem Layout und Kontoseite gemeinsam genutzt. Adressen, die der Proxy-Filter auslässt (Dateiendungen wie `/konto.png`), treffen damit auf dieselbe Prüfung. Der Filter selbst bleibt unverändert, damit Bilder aus `public/` ohne Anmeldung laden.
+- **Titelleiste dunkel (BUG-3, Entscheidung des Nutzers 2026-11-16):** Verlaufsende `#4A78B8` → `#34609F` (mindestens 4,98:1 für den Titeltext); in `docs/design-system.md` nachgetragen, geprüft in `src/app/farben.test.ts`.

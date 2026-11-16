@@ -268,7 +268,7 @@
       --desktop: 220 22.4% 13.1%; /* Arbeitsfläche #1A1F29 */
       --field: 222.9 10.4% 13.1%; /* Eingabefeld / Tabelle #1E2025 */
       --titlebar-from: 218.1 52.5% 38.8%; /* #2F5597 */
-      --titlebar-to: 214.9 43.7% 50.6%; /* #4A78B8 */
+      --titlebar-to: 215.3 50.7% 41.4%; /* #34609F (BUG-3: 4.5:1 for the title text) */
       --titlebar-inactive-from: 225 5.1% 30.6%; /* #4A4C52 */
       --titlebar-inactive-to: 225 3.9% 40%; /* #62646A */
       --edge-light: 223.6 6.7% 32%; /* #4C4F57 */

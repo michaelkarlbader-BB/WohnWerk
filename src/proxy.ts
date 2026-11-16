@@ -1,14 +1,9 @@
 // Runs before every matched request: refreshes the Supabase session, enforces the
 // 30-minute inactivity limit and keeps signed-out visitors away from protected pages.
 import { NextResponse, type NextRequest } from 'next/server'
-import {
-  AKTIVITAET_COOKIE,
-  AKTIVITAET_COOKIE_OPTIONEN,
-  istInaktiv,
-} from '@/features/konto/konto.rules'
+import { AKTIVITAET_COOKIE, AKTIVITAET_COOKIE_OPTIONEN } from '@/features/konto/konto.rules'
+import { zugangPruefen } from '@/features/konto/zugang'
 import { createProxyClient, uebernehmeCookies } from '@/lib/supabase/proxy'
-
-type ProxyClient = ReturnType<typeof createProxyClient>['supabase']
 
 // Everything that is not listed here is protected (fail closed).
 const OEFFENTLICHE_PFADE = [
@@ -28,27 +23,6 @@ function istOeffentlich(pfad: string): boolean {
   return OEFFENTLICHE_PFADE.some((basis) => pfad === basis || pfad.startsWith(`${basis}/`))
 }
 
-/** Asks the Auth server (not just the local token), so "sign out everywhere" takes effect. */
-async function istAngemeldet(supabase: ProxyClient): Promise<boolean> {
-  try {
-    const { data, error } = await supabase.auth.getUser()
-    return !error && Boolean(data?.user)
-  } catch {
-    return false
-  }
-}
-
-/** True while a session with an enrolled second factor has not passed it yet. Fails closed. */
-async function zweiterFaktorOffen(supabase: ProxyClient): Promise<boolean> {
-  try {
-    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-    if (error || !data) return true
-    return data.nextLevel === 'aal2' && data.currentLevel !== 'aal2'
-  } catch {
-    return true
-  }
-}
-
 function umleitung(request: NextRequest, pfad: string, weiter?: string): NextResponse {
   const ziel = request.nextUrl.clone()
   ziel.pathname = pfad
@@ -61,20 +35,22 @@ export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
   const { supabase, response } = createProxyClient(request)
 
-  let angemeldet = await istAngemeldet(supabase)
-  let abgelaufen = false
+  const zugang = await zugangPruefen(
+    supabase,
+    request.cookies.get(AKTIVITAET_COOKIE)?.value,
+    Date.now()
+  )
+  const abgelaufen = zugang.stufe === 'inaktiv'
+  const angemeldet = zugang.stufe === 'voll' || zugang.stufe === 'zweiter-faktor-offen'
+  const vollAngemeldet = zugang.stufe === 'voll'
 
-  if (angemeldet && istInaktiv(request.cookies.get(AKTIVITAET_COOKIE)?.value, Date.now())) {
+  if (abgelaufen) {
     try {
       await supabase.auth.signOut({ scope: 'local' })
     } catch {
       // The session counts as ended either way.
     }
-    angemeldet = false
-    abgelaufen = true
   }
-
-  const vollAngemeldet = angemeldet && !(await zweiterFaktorOffen(supabase))
 
   let antwort: NextResponse
   if (!istOeffentlich(pathname) && !vollAngemeldet) {

@@ -1,5 +1,6 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import {
   AlertDialog,
@@ -21,8 +22,13 @@ import { aktuelleMarke, markeAnlegen } from './verlauf'
 export function UngespeichertWaechter() {
   const { ungespeichert, rueckfrageOffen, rueckfrageStellen, rueckfrageBeantworten, istUngespeichert } =
     useRahmenZustand()
-  /** True while our own history entry lies on top of the page's entry. */
-  const eintragAktiv = useRef(false)
+  // The address actually shown; the frame's `pfad` is already the destination while loading.
+  const pfad = usePathname() ?? '/'
+  /**
+   * Address of the page our own history entry guards, or null when there is none. An entry of
+   * another page lies below the current page's entry and guards nothing here (BUG-1).
+   */
+  const eintragPfad = useRef<string | null>(null)
 
   // AC-28 / AC-29: the browser only asks while a page reports unsaved changes.
   useEffect(() => {
@@ -40,29 +46,29 @@ export function UngespeichertWaechter() {
   // Back button: the App Router cannot block a navigation. An additional history entry with the
   // same address takes the "Zurück"; then the frame asks.
   useEffect(() => {
-    if (!ungespeichert || eintragAktiv.current) return
+    if (!ungespeichert || eintragPfad.current === pfad) return
     markeAnlegen('ungespeichert')
-    eintragAktiv.current = true
-  }, [ungespeichert])
+    eintragPfad.current = pfad
+  }, [ungespeichert, pfad])
 
   useEffect(() => {
     const zurueck = () => {
       // Still on our entry (e.g. the drawer's entry above it was closed): nothing was used up.
-      if (!eintragAktiv.current || aktuelleMarke() === 'ungespeichert') return
-      eintragAktiv.current = false
+      if (eintragPfad.current === null || aktuelleMarke() === 'ungespeichert') return
+      eintragPfad.current = null
       // Saved in the meantime: the entry is simply gone, a "Zurück" without visible effect.
       if (!istUngespeichert()) return
       rueckfrageStellen(
         () => window.history.back(),
         () => {
           markeAnlegen('ungespeichert')
-          eintragAktiv.current = true
+          eintragPfad.current = pfad
         }
       )
     }
     window.addEventListener('popstate', zurueck)
     return () => window.removeEventListener('popstate', zurueck)
-  }, [istUngespeichert, rueckfrageStellen])
+  }, [pfad, istUngespeichert, rueckfrageStellen])
 
   return (
     <AlertDialog

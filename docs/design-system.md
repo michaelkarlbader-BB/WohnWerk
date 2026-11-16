@@ -12,7 +12,7 @@
 | Eingabefeld / Tabelle | `#FBFBF8` | `#1E2025` | Felder, Tabelleninhalte |
 | Text | `#1C1C1C` | `#E6E4DF` | Fließtext |
 | Text gedämpft | `#4F4F4F` | `#A9A7A1` | Hilfetexte, Statusleiste |
-| Primär (Titelleiste, Auswahl) | `#0A246A` → Verlauf `#3A6EA5` | `#2F5597` → `#4A78B8` | aktive Titelleiste, ausgewählte Zeile, Rahmen Primär-Button |
+| Primär (Titelleiste, Auswahl) | `#0A246A` → Verlauf `#3A6EA5` | `#2F5597` → `#34609F` | aktive Titelleiste, ausgewählte Zeile, Rahmen Primär-Button |
 | Primär hover / aktiv / dezent | `#16348A` / `#061A50` / `#DCE4F2` | `#3A64AA` / `#24467F` / `#26324A` | Zustände, dezente Auswahl |
 | Titelleiste inaktiv | `#808080` → `#C0C0C0` | `#4A4C52` → `#62646A` | Dialoge im Hintergrund |
 | 3D-Licht / Schatten / Tiefschatten | `#FAFAF7` / `#808080` / `#404040` | `#4C4F57` / `#17181C` / `#0B0C0E` | plastische Kanten |
@@ -20,7 +20,7 @@
 | Negativ / Destruktiv | `#A4161A` | `#F07A7A` | Beträge < 0, Löschen, Fehler |
 | Warnung | `#8A5A00` auf `#FFF4CC` | `#F2C14E` auf `#3A3220` | Hinweise (z. B. Abweichung Restschuld) |
 
-Regeln: kein reines `#000`/`#fff` als Hinter- oder Vordergrund; Text mindestens **4,5:1** Kontrast in beiden Modi; Hell- und Dunkelmodus sind von Anfang an definiert.
+Regeln: kein reines `#000`/`#fff` als Hinter- oder Vordergrund; Text mindestens **4,5:1** Kontrast in beiden Modi, auf Verläufen an beiden Enden (geprüft in `src/app/farben.test.ts`); Hell- und Dunkelmodus sind von Anfang an definiert.
 
 ## Typografie
 - Schrift: `Tahoma, Verdana, "Segoe UI", sans-serif` – Systemschriften, keine Webschrift.

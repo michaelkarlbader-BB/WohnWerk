@@ -212,6 +212,39 @@ describe('Zurück im Browser', () => {
     expect(pushState).toHaveBeenCalledTimes(2)
   })
 
+  // BUG-1: the entry of the previous page lies below the new page's entry and guards nothing.
+  function zurNaechstenSeite(seite: { melden: (wert: boolean) => void }) {
+    // The router moves on to another area: a new history entry above the old guard entry.
+    act(() => window.history.pushState(null, '', '/mieter'))
+    nav.pfad = '/mieter'
+    seite.melden(false)
+    pushState.mockClear()
+  }
+
+  it('guards the next page again after the old changes were saved (AC-27)', () => {
+    const seite = aufbauen(true)
+    seite.melden(false)
+    zurNaechstenSeite(seite)
+
+    seite.melden(true)
+    expect(pushState).toHaveBeenCalledTimes(1)
+    zurueckImBrowser()
+    expect(screen.getByRole('alertdialog', { name: FRAGE })).toBeInTheDocument()
+  })
+
+  it('guards the next page again after the old changes were discarded (AC-27)', () => {
+    const seite = aufbauen(true)
+    act(() => rahmen.navigieren('/mieter'))
+    fireEvent.click(screen.getByRole('button', { name: 'Verwerfen' }))
+    expect(nav.push).toHaveBeenCalledTimes(1)
+    zurNaechstenSeite(seite)
+
+    seite.melden(true)
+    expect(pushState).toHaveBeenCalledTimes(1)
+    zurueckImBrowser()
+    expect(screen.getByRole('alertdialog', { name: FRAGE })).toBeInTheDocument()
+  })
+
   it('leaves the history alone without unsaved changes', () => {
     aufbauen(false)
     zurueckImBrowser()
